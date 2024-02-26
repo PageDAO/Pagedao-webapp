@@ -1,0 +1,44 @@
+{
+  "name": "pagedao",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@dynamic-labs/algorand": "^1.1.4",
+    "@dynamic-labs/blocto-evm": "^1.1.4",
+    "@dynamic-labs/cosmos": "^1.1.4",
+    "@dynamic-labs/ethereum": "^1.1.4",
+    "@dynamic-labs/ethers-v5": "^1.1.4",
+    "@dynamic-labs/flow": "^1.1.4",
+    "@dynamic-labs/magic": "^1.1.4",
+    "@dynamic-labs/sdk-react-core": "^1.1.4",
+    "@dynamic-labs/solana": "^1.1.4",
+    "@dynamic-labs/starknet": "^1.1.4",
+    "localforage": "^1.10.0",
+    "magic-sdk": "^22.1.1",
+    "match-sorter": "^6.3.4",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.22.1",
+    "sort-by": "^1.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.58",
+    "@types/react-dom": "^18.2.19",
+    "@vitejs/plugin-react": "^4.2.1",
+    "autoprefixer": "^10.4.17",
+    "eslint": "^8.57.0",
+    "eslint-plugin-react": "^7.33.2",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.5",
+    "postcss": "^8.4.35",
+    "tailwindcss": "^3.4.1",
+    "vite": "^5.1.4"
+  }
+}
