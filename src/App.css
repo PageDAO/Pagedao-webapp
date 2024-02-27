@@ -5,3 +5,12 @@
 body {
     background: white;
 }
+
+.ReactCollapse--collapse {
+  transition: height 500ms;
+  width: 100%;
+}
+
+.ReactCollapse--content {
+  width: 100%;
+}

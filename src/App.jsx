@@ -3,7 +3,7 @@ import Login from "./template/Login.jsx";
 import {createBrowserRouter, RouterProvider,} from "react-router-dom";
 import {useDynamicContext, useIsLoggedIn,} from "@dynamic-labs/sdk-react-core";
 import React from "react";
-import Dashboard from "./template/Dashboard.jsx";
+import Dashboard from "./template/Dashboard/Dashboard.jsx";
 
 function App() {
     const isLoggedIn = useIsLoggedIn();

@@ -5,7 +5,11 @@ export default {
         "./src/**/*.{js,ts,jsx,tsx}",
     ],
     theme: {
-        extend: {},
+        extend: {
+            colors: {
+                'dao-primary': '#c5614d',
+            },
+        },
     },
     plugins: [],
     darkMode: 'selector',

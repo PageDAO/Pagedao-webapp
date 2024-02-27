@@ -1,40 +1,26 @@
-import logo from "../assets/logo.svg";
-import Menu from "./Menu.jsx";
-import {DynamicWidget, useDynamicContext} from "@dynamic-labs/sdk-react-core";
+import {Link} from "react-router-dom";
+import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
+import {faGear} from "@fortawesome/free-solid-svg-icons";
 
 function Header() {
     return (
         <>
-            <div className="flex h-16 items-center px-4">
-                <img
-                    className="block w-auto max-w-full h-8 align-middle lg:hidden"
-                    src={logo}
-                    alt="PageDAO"
-                />
-                <img
-                    className="hidden w-auto max-w-full h-8 align-middle lg:block"
-                    src={logo}
-                    alt="PageDAO"
-                />
-                <Menu />
-                <div className="ml-auto flex items-center space-x-4">
-                    <button
-                        className="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground px-4 py-2 relative h-8 w-8 rounded-full"
-                        type="button"
-                        id="radix-:r11j:"
-                        aria-haspopup="menu"
-                        aria-expanded="false"
-                        data-state="closed"
-                    >
-                      <span className="relative flex shrink-0 overflow-hidden rounded-full h-8 w-8">
-                        <img
-                            className="aspect-square h-full w-full"
-                            alt="@shadcn"
-                            src="https://i.pravatar.cc/500"
-                        />
-                      </span>
-                    </button>
-                    <DynamicWidget/>
+            <div className="w-full bg-gray-50">
+                <div className="container mx-auto py-10 flex justify-between">
+                    <div className="">
+                        <h2
+                            className="text-neutral-800 text-6xl font-bold font-['Arvo']">
+                            My Books
+                        </h2>
+                    </div>
+                    <div className="justify-end items-center gap-4 flex">
+                        <button className="bg-white px-4 py-3 rounded-xl text-neutral-800 text-base font-medium font-['DM Sans'] leading-snug">
+                            Share my profile
+                        </button>
+                        <Link to={"/"}>
+                            <FontAwesomeIcon icon={faGear} />
+                        </Link>
+                    </div>
                 </div>
             </div>
         </>
