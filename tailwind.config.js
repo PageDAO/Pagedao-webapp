@@ -1,4 +1,5 @@
 /** @type {import('tailwindcss').Config} */
+
 export default {
     content: [
         "./index.html",
@@ -9,6 +10,9 @@ export default {
             colors: {
                 'dao-primary': '#c5614d',
             },
+            animation: {
+                'spin-slow': 'spin 3s linear infinite',
+            }
         },
     },
     plugins: [],

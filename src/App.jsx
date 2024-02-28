@@ -4,6 +4,11 @@ import {createBrowserRouter, RouterProvider,} from "react-router-dom";
 import {useDynamicContext, useIsLoggedIn,} from "@dynamic-labs/sdk-react-core";
 import React from "react";
 import Dashboard from "./template/Dashboard/Dashboard.jsx";
+import Project from "./template/Project/Project.jsx";
+import AddBook from "./template/Project/AddBook.jsx";
+import PreviewBook from "./template/Project/PreviewBook.jsx";
+import Publishing from "./template/Project/Publishing.jsx";
+import PublishingDone from "./template/Project/PublishingDone.jsx";
 
 function App() {
     const isLoggedIn = useIsLoggedIn();
@@ -13,6 +18,26 @@ function App() {
         {
             path: "/",
             element: isLoggedIn ? <Dashboard/> : <Login/>,
+        },
+        {
+            path: "/project",
+            element: isLoggedIn ? <Project/> : <Login/>,
+        },
+        {
+            path: "/book/add",
+            element: isLoggedIn ? <AddBook/> : <Login/>,
+        },
+        {
+            path: "/book/preview",
+            element: isLoggedIn ? <PreviewBook/> : <Login/>,
+        },
+        {
+            path: "/book/publishing",
+            element: isLoggedIn ? <Publishing/> : <Login/>,
+        },
+        {
+            path: "/book/publishing-done",
+            element: isLoggedIn ? <PublishingDone/> : <Login/>,
         },
     ]);
 

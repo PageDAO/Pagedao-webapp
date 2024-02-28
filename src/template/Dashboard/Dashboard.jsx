@@ -1,6 +1,7 @@
-import TopNav from "../TopNav.jsx";
+import TopNav from "../Layout/TopNav.jsx";
 import Content from "./Content.jsx";
-import Header from "../Header.jsx";
+import Header from "../Layout/Header.jsx";
+import Footer from "../Layout/Footer.jsx";
 
 function Dashboard() {
     return (
@@ -16,6 +17,7 @@ function Dashboard() {
                     <div className="">
                         <Content/>
                     </div>
+                    <Footer/>
                 </div>
             </div>
         </>

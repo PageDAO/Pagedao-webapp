@@ -5,7 +5,7 @@ import {faGear} from "@fortawesome/free-solid-svg-icons";
 function Header() {
     return (
         <>
-            <div className="w-full bg-gray-50">
+            <div className="w-full bg-neutral-100">
                 <div className="container mx-auto py-10 flex justify-between">
                     <div className="">
                         <h2
