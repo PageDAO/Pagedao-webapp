@@ -2,7 +2,7 @@ import logo from "../assets/logo.svg";
 import icon from "../assets/icon.svg";
 import pagedaoGuy from "../assets/pagedao-guy.svg";
 import {Link} from "react-router-dom";
-import {DynamicWidget} from "@dynamic-labs/sdk-react-core";
+import {DynamicEmbeddedWidget} from "@dynamic-labs/sdk-react-core";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faBars} from "@fortawesome/free-solid-svg-icons";
 import TopNav from "./TopNav.jsx";
@@ -46,7 +46,7 @@ function Login() {
                                     </div>
                                 </div>
                                 <div className="mt-4 gap-6 flex-col justify-center items-center flex w-full">
-                                    <DynamicWidget/>
+                                    <DynamicEmbeddedWidget/>
                                 </div>
                             </div>
                         </div>
