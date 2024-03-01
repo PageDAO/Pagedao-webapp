@@ -1,9 +1,10 @@
 import logo from "../assets/logo.svg";
 import Menu from "./Menu.jsx";
-import {DynamicWidget, useIsLoggedIn} from "@dynamic-labs/sdk-react-core";
+import {DynamicConnectButton, DynamicWidget, useIsLoggedIn} from "@dynamic-labs/sdk-react-core";
 import icon from "../assets/icon.svg";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faBars} from "@fortawesome/free-solid-svg-icons";
+import { Link } from 'react-router-dom';
 
 function TopNav() {
     const isLoggedIn = useIsLoggedIn();
@@ -11,8 +12,9 @@ function TopNav() {
     return (
         <>
             <div className="container mx-auto pt-6 pb-4 justify-between items-center flex">
+
                 <div>
-                    Marketplace
+                    <Link to="Marketplace">Marketplace</Link>
                 </div>
                 <div>
                     <img src={icon} alt="icon" className="w-10 h-10"/>
@@ -25,7 +27,7 @@ function TopNav() {
                         <FontAwesomeIcon icon={faBars}/>
                     </div>
                     <div>
-                        {isLoggedIn && <DynamicWidget/>}
+                        {isLoggedIn? <DynamicWidget/> : <DynamicConnectButton>Connect</DynamicConnectButton>}
                     </div>
                 </div>
             </div>

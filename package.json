@@ -25,6 +25,7 @@
     "@fortawesome/free-regular-svg-icons": "^6.5.1",
     "@fortawesome/free-solid-svg-icons": "^6.5.1",
     "@fortawesome/react-fontawesome": "^0.2.0",
+    "@rarible/sdk": "^0.13.68-fix.7",
     "localforage": "^1.10.0",
     "magic-sdk": "^23.0.0",
     "match-sorter": "^6.3.4",
@@ -33,12 +34,14 @@
     "react-dom": "^18.2.0",
     "react-modal": "^3.16.1",
     "react-router-dom": "^6.22.1",
-    "sort-by": "^1.2.0"
+    "sort-by": "^1.2.0",
+    "viem": "^2.7.16"
   },
   "devDependencies": {
     "@types/react": "^18.2.59",
     "@types/react-dom": "^18.2.19",
     "@vitejs/plugin-react": "^4.2.1",
+    "algosdk": "^2.7.0",
     "autoprefixer": "^10.4.17",
     "eslint": "^8.57.0",
     "eslint-plugin-react": "^7.33.2",
