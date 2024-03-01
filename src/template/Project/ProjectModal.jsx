@@ -1,10 +1,8 @@
-import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
-import {faCircleXmark} from "@fortawesome/free-regular-svg-icons";
-import FileDnD from "../Forms/FileDnD.jsx";
+import {Book, XCircle} from 'lucide-react';
+
 import Modal from "react-modal";
 import React, {useState} from "react";
 import CollaboratorsComponent from "../Forms/Collaborators.jsx";
-import {faBook, faHandsHoldingCircle} from "@fortawesome/free-solid-svg-icons";
 
 const customStyles = {
     content: {
@@ -28,8 +26,9 @@ const customStyles = {
 
 Modal.setAppElement('#root');
 
+// ToDo: Check if is a new project or an existing one and populates the form accordingly
 
-function NewProjectModal({modalIsOpen, setIsOpen}) {
+function ProjectModal({modalIsOpen, setIsOpen}) {
 
     const [collaborators, setCollaborators] = useState([{address: ''}]);
 
@@ -69,8 +68,7 @@ function NewProjectModal({modalIsOpen, setIsOpen}) {
                         </div>
                         <div>
                             <button onClick={closeModal}>
-                                <FontAwesomeIcon
-                                    icon={faCircleXmark}
+                                <XCircle
                                     className="w-5 h-5 text-gray-400"
                                 />
                             </button>
@@ -84,7 +82,7 @@ function NewProjectModal({modalIsOpen, setIsOpen}) {
                                     className="self-stretch  flex-col justify-start items-start gap-2 flex">
                                     <div
                                         className="p-4 bg-neutral-50 rounded-lg justify-start items-start gap-2 inline-flex">
-                                        <FontAwesomeIcon icon={faHandsHoldingCircle} className="w-10 h-10 text-gray-400"/>
+                                        <Book className="w-10 h-10 text-gray-400"/>
                                     </div>
                                     <div
                                         className="self-stretch isOpened rounded-lg flex-col justify-start items-start gap-1 flex">
@@ -184,4 +182,4 @@ function NewProjectModal({modalIsOpen, setIsOpen}) {
     )
 }
 
-export default NewProjectModal;
+export default ProjectModal;

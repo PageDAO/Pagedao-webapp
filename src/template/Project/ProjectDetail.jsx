@@ -1,17 +1,7 @@
 import React from "react";
-import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
-import {
-    faArrowDownAZ,
-    faArrowDownWideShort,
-    faArrowUpAZ,
-    faArrowUpWideShort,
-    faBook,
-    faGrip,
-    faPlusCircle,
-    faSearch
-} from "@fortawesome/free-solid-svg-icons";
-import Project from "./Project.jsx";
 import ProjectItem from "./ProjectItem.jsx";
+import {ArrowDownAZ, ArrowDownWideNarrow, ArrowUpAZ, ArrowUpNarrowWide, Search} from "lucide-react";
+import ProjectStats from "./ProjectStats.jsx";
 
 function ProjectDetail() {
     let show = true;
@@ -36,7 +26,7 @@ function ProjectDetail() {
                                         type="button"
                                         className="absolute right-2 bg-transparent flex items-center justify-center text-gray-700"
                                     >
-                                        <FontAwesomeIcon icon={faSearch}/>
+                                        <Search/>
                                     </button>
                                 </div>
                             </div>
@@ -47,7 +37,7 @@ function ProjectDetail() {
                                     <span>
                                         Newest to Oldest
                                     </span>
-                                    <FontAwesomeIcon icon={faArrowDownWideShort}/>
+                                    <ArrowDownWideNarrow/>
 
                                     {/* Dropdown */}
                                     <div
@@ -58,21 +48,21 @@ function ProjectDetail() {
                                             className="flex flex-row justify-between gap-2 items-center hover:bg-zinc-100 p-2 rounded-lg"
                                         >
                                             <p>Oldest to Newest</p>
-                                            <FontAwesomeIcon icon={faArrowUpWideShort}/>
+                                            <ArrowUpNarrowWide/>
                                         </span>
 
                                         <span
                                             className="flex flex-row justify-between gap-2 items-center hover:bg-zinc-100 p-2 rounded-lg"
                                         >
                                             <p>A-Z</p>
-                                            <FontAwesomeIcon icon={faArrowDownAZ}/>
+                                            <ArrowDownAZ/>
                                         </span>
 
                                         <span
                                             className="flex flex-row justify-between gap-2 items-center hover:bg-zinc-100 p-2 rounded-lg"
                                         >
                                             <p>Z-A</p>
-                                            <FontAwesomeIcon icon={faArrowUpAZ}/>
+                                            <ArrowUpAZ/>
                                         </span>
                                     </div>
                                 </button>
@@ -80,69 +70,21 @@ function ProjectDetail() {
                         </div>
 
                         <div className="grid grid-cols-4 gap-4 w-full">
-                            <ProjectItem />
-                            <ProjectItem />
-                            <ProjectItem />
+                            <ProjectItem/>
+                            <ProjectItem
+                                project={
+                                    {
+                                        title: "Test Project",
+                                        description: "This is a test project"
+                                    }
+                                }
+                            />
                         </div>
 
                     </div>
 
-
-                    {/* Project Stats */}
                     <div className="basis-1/4 w-full">
-                        <div
-                            className="p-6 bg-neutral-50 rounded-lg flex-col justify-start items-start gap-6 inline-flex">
-                            <div className="self-stretch flex-col justify-start items-start gap-6 flex">
-                                <div
-                                    className="self-stretch text-neutral-800 text-3xl font-bold font-['Arvo'] leading-loose">Project
-                                    Stats
-                                </div>
-                                <div className="self-stretch flex-col justify-start items-start gap-6 flex">
-                                    <div
-                                        className="self-stretch pb-2 border-b border-neutral-500 flex-col justify-start items-start gap-2 flex">
-                                        <div
-                                            className="text-neutral-800 text-xl font-normal font-['DM Sans'] leading-7">Created
-                                        </div>
-                                        <div
-                                            className="text-right text-neutral-800 text-xl font-bold font-['DM Sans'] leading-7">dd/mm/yyyy
-                                        </div>
-                                    </div>
-                                    <div
-                                        className="self-stretch pb-2 border-b border-neutral-500 flex-col justify-start items-start gap-2 flex">
-                                        <div
-                                            className="text-neutral-800 text-xl font-normal font-['DM Sans'] leading-7">Number
-                                            of book
-                                        </div>
-                                        <div
-                                            className="text-right text-neutral-800 text-xl font-bold font-['DM Sans'] leading-7">0
-                                        </div>
-                                    </div>
-                                    <div
-                                        className="self-stretch pb-2 border-b border-neutral-500 flex-col justify-start items-start gap-2 flex">
-                                        <div
-                                            className="text-neutral-800 text-xl font-normal font-['DM Sans'] leading-7">Number
-                                            of collections
-                                        </div>
-                                        <div
-                                            className="text-right text-neutral-800 text-xl font-bold font-['DM Sans'] leading-7">0
-                                        </div>
-                                    </div>
-                                    <div className="self-stretch pb-2 flex-col justify-start items-start gap-2 flex">
-                                        <div
-                                            className="text-neutral-800 text-xl font-normal font-['DM Sans'] leading-7">Collaborators
-                                        </div>
-                                        <div
-                                            className="text-right text-neutral-800 text-xl font-bold font-['DM Sans'] leading-7">None
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div
-                                className="self-stretch px-8 py-3 rounded-lg border border-neutral-800 justify-center items-center gap-1 inline-flex">
-                                <div className="text-neutral-800 text-base font-bold font-['DM Sans'] leading-snug">Edit
-                                </div>
-                            </div>
-                        </div>
+                        <ProjectStats/>
                     </div>
                 </div>
             </div>

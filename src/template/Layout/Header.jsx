@@ -1,6 +1,5 @@
 import {Link} from "react-router-dom";
-import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
-import {faGear} from "@fortawesome/free-solid-svg-icons";
+import {Settings} from "lucide-react";
 
 function Header() {
     return (
@@ -14,11 +13,12 @@ function Header() {
                         </h2>
                     </div>
                     <div className="justify-end items-center gap-4 flex">
-                        <button className="bg-white px-4 py-3 rounded-xl text-neutral-800 text-base font-medium font-['DM Sans'] leading-snug">
+                        <button
+                            className="bg-white px-4 py-3 rounded-xl text-neutral-800 text-base font-medium font-['DM Sans'] leading-snug">
                             Share my profile
                         </button>
                         <Link to={"/"}>
-                            <FontAwesomeIcon icon={faGear} />
+                            <Settings/>
                         </Link>
                     </div>
                 </div>

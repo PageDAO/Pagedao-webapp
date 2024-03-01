@@ -1,6 +1,5 @@
 import React from 'react';
-import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
-import {faCircleXmark} from '@fortawesome/free-regular-svg-icons';
+import {XCircle} from "lucide-react";
 
 const CollaboratorsComponent = ({collaborators, setCollaborators}) => {
     const addCollaborator = () => {
@@ -42,7 +41,7 @@ const CollaboratorsComponent = ({collaborators, setCollaborators}) => {
                                 />
                                 {collaborators.length > 1 && (
                                     <button onClick={() => removeCollaborator(index)}>
-                                        <FontAwesomeIcon icon={faCircleXmark}/>
+                                        <XCircle/>
                                     </button>
                                 )}
                             </div>

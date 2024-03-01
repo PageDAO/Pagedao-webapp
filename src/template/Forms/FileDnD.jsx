@@ -1,7 +1,5 @@
 import React, {useRef, useState} from 'react';
-import {faUpload} from "@fortawesome/free-solid-svg-icons";
-import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
-import {faCircleXmark, faFile} from "@fortawesome/free-regular-svg-icons";
+import {File, Upload, XCircle} from "lucide-react";
 
 function humanFileSize(size) {
     const i = Math.floor(Math.log(size) / Math.log(1024));
@@ -64,8 +62,7 @@ const FileDnD = () => {
                         title=""
                     />
                     <div className="flex flex-col items-center justify-center py-10 text-center">
-                        <FontAwesomeIcon
-                            icon={faUpload}
+                        <Upload
                             className="w-10 h-10 text-gray-400"
                         />
                         <p>Drag your files here or click in this area.</p>
@@ -85,9 +82,10 @@ const FileDnD = () => {
                                 onDrop={drop}
                             >
                                 {/* ToDo: File type icons or previews here */}
-                                <FontAwesomeIcon icon={faFile} className="h-10" />
-                                <button onClick={() => removeFile(index)} type="button" className="absolute top-0 right-1">
-                                    <FontAwesomeIcon icon={faCircleXmark}/>
+                                <File className="h-10"/>
+                                <button onClick={() => removeFile(index)} type="button"
+                                        className="absolute top-0 right-1">
+                                    <XCircle/>
                                 </button>
                                 <div>
                                     <div className="text-gray-900">{file.name}</div>
