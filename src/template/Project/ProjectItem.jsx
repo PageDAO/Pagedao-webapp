@@ -1,62 +1,50 @@
-import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
-import {faBook, faGrip, faPlusCircle} from "@fortawesome/free-solid-svg-icons";
-import React, {useState} from "react";
+import React from "react";
+import {PlusCircle} from "lucide-react";
 import {Link} from "react-router-dom";
-import NewCollectionModal from "./NewCollectionModal.jsx";
 
 function ProjectItem({project}) {
-    const [isHovering, setIsHovering] = useState(false);
-    const [modalIsOpen, setIsOpen] = React.useState(false);
-
-    function openModal() {
-        setIsOpen(true);
-    }
-
-    const handleMouseOver = () => {
-        setIsHovering(true);
-        console.log('hovering');
-    };
-
-    const handleMouseOut = () => {
-        setIsHovering(false);
-        console.log('not hovering');
-    };
 
     return (
         <>
-            <div
-                onMouseOver={handleMouseOver}
-                onMouseOut={handleMouseOut}
-                className="transition ease-in-out delay-150"
-            >
-                {!isHovering &&
-                    <div
-                        className="transition ease-in-out delay-150 flex flex-col gap-4 bg-white px-4 py-32 rounded-lg justify-center items-center text-center border-2 border-gray-400 border-dotted"
-                    >
-                        <FontAwesomeIcon icon={faPlusCircle} className="h-12 text-gray-500"/>
-                    </div>
-                }
-                {isHovering &&
-                    <div
-                        className="flex flex-col gap-4 bg-gray-700 px-4 py-28 rounded-lg justify-center items-center text-center border-2 border-gray-400 border-dotted">
-                        <Link
-                            to={'/book/add'}
-                            className="bg-dao-primary px-4 py-2 rounded text-white gap-4 flex items-center justify-between w-full">
-                            Books
-                            <FontAwesomeIcon icon={faBook}/>
+            {project ? (
+                <div className="pb-6 flex-col justify-start items-start gap-4 inline-flex">
+                    <div className="relative bg-neutral-50 rounded-lg">
+                        <Link to={'/book/edit'}>
+                        <img
+                            className="h-[347px]"
+                            src="https://picsum.photos/266/347"
+                            alt="Cover"
+                        />
                         </Link>
-
-                        <button
-                            onClick={openModal}
-                            className="bg-dao-primary px-4 py-2 rounded text-white gap-4 flex items-center justify-between w-full">
-                            Collection
-                            <FontAwesomeIcon icon={faGrip}/>
-                        </button>
+                        <div
+                            className="px-2 py-1 left-[16px] top-[16px] absolute bg-amber-200 rounded-lg justify-center items-center gap-2 inline-flex">
+                            <div
+                                className="text-neutral-800 text-sm font-normal font-['DM Sans'] leading-tight">
+                                Published
+                            </div>
+                        </div>
                     </div>
-                }
-            </div>
-
-            <NewCollectionModal modalIsOpen={modalIsOpen} setIsOpen={setIsOpen} />
+                    <div className="flex-col justify-start items-start gap-1 flex">
+                        <div className="pr-4 justify-start items-start gap-6 inline-flex">
+                            <div className="grow shrink basis-0 justify-center items-center gap-2 flex">
+                                <Link
+                                    to={'/book/edit'}
+                                    className="grow shrink basis-0 text-neutral-800 text-lg font-normal font-['DM Sans'] leading-relaxed"
+                                >
+                                    {project.title}
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            ) : (
+                <Link
+                    to={'/book/add'}
+                    className="h-[347px] flex flex-col gap-4 bg-white px-4 rounded-lg justify-center items-center text-center border-2 border-gray-400 border-dotted"
+                >
+                    <PlusCircle size={50} className="text-gray-500"/>
+                </Link>
+            )}
         </>
     );
 }

@@ -1,9 +1,20 @@
 import React, {useState} from 'react';
-import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
-import {faSquareCaretDown, faSquareCaretUp} from "@fortawesome/free-regular-svg-icons";
+import {ChevronDownSquare, ChevronUpSquare} from 'lucide-react';
 import {Collapse} from "react-collapse/src";
+import CollapsableEmptySection from "./CollapsableEmptySection.jsx";
+import CollapsableItemSection from "./CollapsableItemSection.jsx";
 
-function CollapsableSection({title, content, buttonLabel, imageSrc, onActionButtonClick}) {
+function CollapsableSection(
+    {
+        title,
+        items,
+        emptyContent,
+        emptyButtonLabel,
+        buttonLabel,
+        imageSrc,
+        onActionButtonClick
+    }
+) {
     const [isOpened, setIsOpened] = useState(true);
 
     const toggleCollapse = () => {
@@ -18,29 +29,48 @@ function CollapsableSection({title, content, buttonLabel, imageSrc, onActionButt
                         {title}
                     </h3>
                     <button onClick={toggleCollapse}>
-                        {isOpened ? <FontAwesomeIcon icon={faSquareCaretUp}/> :
-                            <FontAwesomeIcon icon={faSquareCaretDown}/>}
-
+                        {isOpened ? <ChevronUpSquare/> : <ChevronDownSquare/>}
                     </button>
                 </div>
                 <Collapse isOpened={isOpened}>
-                    <div
-                        className="w-full px-10 py-16 bg-white rounded-lg flex-col justify-start items-center gap-6 flex"
-                    >
-                        <div>
-                            {imageSrc && <img src={imageSrc} alt={title} className="w-30 h-30"/>}
-                        </div>
+                    {(items && items.length > 0) ? (
                         <div
-                            className="text-neutral-500 text-sm font-normal font-['DM Sans'] leading-tight"
+                            className="w-full py-6 flex-col justify-start items-start gap-4 inline-flex"
                         >
-                            {content}
+                            <div
+                                className="justify-center items-center gap-1 inline-flex">
+                                <button
+                                    onClick={onActionButtonClick}
+                                    className="px-4 py-2 bg-dao-primary rounded-lg text-neutral-50 text-sm font-bold font-['DM Sans'] leading-tight"
+                                >
+                                    {buttonLabel}
+                                </button>
+                            </div>
+                            <div className="w-full p-10 bg-white rounded-lg gap-4 flex flex-col">
+                                {items.map((item, index) => (
+                                    <CollapsableItemSection
+                                        key={index}
+                                        title={title}
+                                        item={item}
+                                        emptyContent={emptyContent}
+                                        emptyButtonLabel={emptyButtonLabel}
+                                        buttonLabel={buttonLabel}
+                                        imageSrc={imageSrc}
+                                        onActionButtonClick={onActionButtonClick}
+                                    />
+                                ))}
+                            </div>
                         </div>
-                        <button
-                            onClick={onActionButtonClick}
-                            className="px-8 py-3 bg-dao-primary rounded-lg justify-center items-center gap-1 inline-flex text-neutral-50 text-base font-bold font-['DM Sans'] leading-snug">
-                            {buttonLabel}
-                        </button>
-                    </div>
+                    ) : (
+                        <CollapsableEmptySection
+                            title={title}
+                            items={items}
+                            emptyContent={emptyContent}
+                            emptyButtonLabel={emptyButtonLabel}
+                            imageSrc={imageSrc}
+                            onActionButtonClick={onActionButtonClick}
+                        />
+                    )}
                 </Collapse>
             </div>
         </>

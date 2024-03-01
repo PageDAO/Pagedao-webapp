@@ -28,6 +28,10 @@ function App() {
             element: isLoggedIn ? <AddBook/> : <Login/>,
         },
         {
+            path: "/book/edit",
+            element: isLoggedIn ? <AddBook/> : <Login/>,
+        },
+        {
             path: "/book/preview",
             element: isLoggedIn ? <PreviewBook/> : <Login/>,
         },

@@ -1,9 +1,6 @@
-import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
-import {faCircleXmark} from "@fortawesome/free-regular-svg-icons";
 import Modal from "react-modal";
 import React, {useState} from "react";
-import CollaboratorsComponent from "../Forms/Collaborators.jsx";
-import {faHandsHoldingCircle} from "@fortawesome/free-solid-svg-icons";
+import {XCircle} from "lucide-react";
 
 const customStyles = {
     content: {
@@ -68,9 +65,8 @@ function NewProjectModal({modalIsOpen, setIsOpen}) {
                         </div>
                         <div>
                             <button onClick={closeModal}>
-                                <FontAwesomeIcon
-                                    icon={faCircleXmark}
-                                    className="w-5 h-5 text-gray-400"
+                                <XCircle size={20}
+                                         className="text-gray-400"
                                 />
                             </button>
                         </div>
@@ -83,7 +79,8 @@ function NewProjectModal({modalIsOpen, setIsOpen}) {
                                     className="self-stretch  flex-col justify-start items-start gap-2 flex">
                                     <div
                                         className="py-2 rounded-lg justify-start items-start gap-2 inline-flex">
-                                        Collection allows writer like you to group a set of books and list them as collection in other major marketplace such as opensea.
+                                        Collection allows writer like you to group a set of books and list them as
+                                        collection in other major marketplace such as opensea.
                                     </div>
                                     <div
                                         className="self-stretch isOpened rounded-lg flex-col justify-start items-start gap-1 flex">

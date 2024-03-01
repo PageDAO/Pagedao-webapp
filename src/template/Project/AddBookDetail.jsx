@@ -1,10 +1,37 @@
-import React from "react";
-import {faCloudArrowUp} from "@fortawesome/free-solid-svg-icons";
-import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
+import React, {useState} from "react";
 import {Link} from "react-router-dom";
+import {Percent, UploadCloud} from "lucide-react";
 
 function AddBookDetail() {
-    let show = true;
+    const [coverImage, setCoverImage] = useState(null);
+    const [isHovering, setIsHovering] = useState(false);
+
+    const uploadButtonClasses = ({
+        'px-14 py-24 flex-col justify-start items-center gap-4 inline-flex': true,
+        'bg-neutral-50 bg-opacity-50': isHovering
+    });
+
+    const handleImageUpload = (event) => {
+        const file = event.target.files[0];
+        if (file && file.type.startsWith("image/")) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                // Update the status with this new image URL
+                setCoverImage(reader.result);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const uploadToAPI = () => {
+        const formData = new FormData();
+        // `coverImageFile` must be the actual file selected, not the URL/base64.
+        // This may require to store the file in the state in addition to its URL/base64.
+        formData.append("image", coverImageFile);
+        // Later we should make the request to our API with formData
+        // For example: axios.post('yourAPI/uploadImage', formData);
+    };
+
 
     return (
         <>
@@ -16,15 +43,36 @@ function AddBookDetail() {
                             <div className="text-neutral-800 text-2xl font-bold font-['Arvo'] leading-normal">
                                 Cover
                             </div>
-                            <div className="relative bg-neutral-50 rounded-lg border-2 border-gray-300 border-dotted">
+                            <div
+                                style={{'--image-url': `url(${coverImage})`}}
+                                className={
+                                    "relative bg-neutral-50 rounded-lg " +
+                                    (!coverImage ? 'border-2 border-gray-300 border-dotted ' : 'border-none ') +
+                                    "cursor-pointer w-[358px] h-[467px] " +
+                                    "bg-[image:var(--image-url)] bg-no-repeat bg-cover bg-center " +
+                                    "items-center justify-center flex "
+                                }
+                                onMouseEnter={() => setIsHovering(true)}
+                                onMouseLeave={() => setIsHovering(false)}
+                                onClick={() => document.getElementById('file-upload').click()}
+                            >
+                                <input
+                                    id="file-upload"
+                                    type="file"
+                                    onChange={handleImageUpload}
+                                    style={{display: "none"}}
+                                    accept="image/*"
+                                />
                                 <div
-                                    className="px-14 py-24 flex-col justify-start items-center gap-4 inline-flex">
-                                    <div className="relative">
-                                        <FontAwesomeIcon icon={faCloudArrowUp} className="h-12 text-gray-400"/>
-                                    </div>
-                                    <div
-                                        className="text-center text-neutral-500 text-base font-normal font-['DM Sans'] leading-snug">
-                                        Upload your cover image
+                                    className={
+                                        'w-full h-full flex-col justify-center items-center gap-4 inline-flex ' +
+                                        (isHovering ? 'bg-neutral-50 bg-opacity-90' : '') +
+                                        (coverImage && !isHovering ? 'hidden' : '')
+                                    }
+                                >
+                                    <UploadCloud className="h-12 text-gray-400"/>
+                                    <div className="text-center text-neutral-500">
+                                        {!coverImage ? 'Upload' : 'Change'} your cover image
                                     </div>
                                 </div>
                             </div>
@@ -168,6 +216,55 @@ function AddBookDetail() {
                                     </div>
                                 </div>
                             </div>
+                            <div className="flex-col justify-start items-start gap-4 inline-flex w-full">
+                                <div
+                                    className="text-neutral-800 text-2xl font-bold font-['Arvo'] leading-normal">Preview
+                                </div>
+                                <div className="self-stretch rounded-lg flex-col justify-start items-start flex">
+                                    <div
+                                        className="self-stretch px-4 pt-4 pb-2 bg-neutral-50 justify-between items-center inline-flex">
+                                        <div className="justify-start items-center gap-2 flex">
+                                            <div
+                                                className="text-neutral-800 text-lg font-bold font-['DM Sans'] leading-relaxed">Allow
+                                                reader to preview
+                                            </div>
+                                        </div>
+                                        <div className="relative">
+                                            <label htmlFor="allow_preview">
+                                                <input id="allow_preview" type="checkbox" className="bigCheckBox"/>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div
+                                        className="self-stretch rounded-lg flex-col justify-start items-start gap-1 flex">
+                                        <div
+                                            className="self-stretch pl-4 pr-2 py-3 bg-neutral-50 flex-col justify-start items-start gap-1 flex">
+                                            <div className="self-stretch justify-start items-start gap-2.5 inline-flex">
+                                                <div
+                                                    className="text-gray-600 text-sm font-normal font-['DM Sans'] leading-tight">Enter
+                                                    the amount of book as sample for user to preview
+                                                </div>
+                                            </div>
+                                            <div
+                                                className="self-stretch justify-start items-start gap-1 inline-flex">
+                                                <div className="relative mt-2 w-full">
+                                                    <input
+                                                        type="text"
+                                                        name="preview_amount"
+                                                        id="preview_amount"
+                                                        className="bg-transparent block w-full py-1.5 pl-0 pr-20 text-black border-0 text-base font-normal font-['DM Sans'] leading-snug placeholder:text-gray-400 focus:outline-none "
+                                                        placeholder="10"
+                                                    />
+                                                    <div className="absolute inset-y-0 right-0 flex items-center">
+                                                        <span
+                                                            className="text-gray-500 sm:text-sm bg-transparent py-0 pl-2 pr-4"><Percent/></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                             <div className="self-stretch justify-start items-start gap-4 inline-flex">
                                 <div
                                     className="justify-center items-center gap-1 flex">
@@ -259,6 +356,13 @@ function AddBookDetail() {
                                         <div
                                             className="text-right text-zinc-400 text-xl font-medium font-['DM Sans'] leading-7">Coming
                                             soon
+                                        </div>
+                                    </div>
+                                    <div
+                                        className="p-4 bg-amber-100 rounded-lg justify-center items-center gap-2 inline-flex">
+                                        <div
+                                            className="grow shrink basis-0 text-neutral-800 text-lg font-normal font-['DM Sans'] leading-relaxed">
+                                            Your content is stored and computed on encrypted data through Secret Network.
                                         </div>
                                     </div>
                                 </div>
