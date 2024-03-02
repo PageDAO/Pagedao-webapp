@@ -22,8 +22,7 @@ function Footer() {
                           </Link>
                       </div>
                       <div className="text-neutral-800 text-sm font-normal leading-tight">
-                          The only
-                          NFT marketplace dedicated to books & wisdom.
+                          Made with love by PageDAO's Page Open Source Project Community
                       </div>
                   </div>
                   <div className="justify-start items-start gap-8 flex">
