@@ -1,7 +1,7 @@
 import {Link} from "react-router-dom";
 import {SecretDocumentClient} from "../../sdk-js/src/index";
-import { Config } from "../../sdk-js/src/index";
-import { IPFSStorage } from "../../sdk-js/src/StoreDocument/storage/IPFSStorage";
+import { Config } from "../../sdk-js/src/Config";
+import { IPFSStorage } from "../../sdk-js/src/StoreDocument/Storage/IPFSStorage";
 import { useWalletClient } from "@dynamic-labs/sdk-react-core";
     
 function PreviewBookDetail() {
@@ -9,7 +9,7 @@ function PreviewBookDetail() {
     const config = new Config();
 
     // You can use your Wagmi wallet from client with:
-    // import the wallet client from the dynamic context
+    // import the wallet client from the dynamic context and use it to initialize the client.
     
     const { data: walletClient } = useWalletClient();
     config.useEvmWallet({
