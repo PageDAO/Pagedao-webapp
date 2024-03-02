@@ -1,6 +1,25 @@
 import {Link} from "react-router-dom";
-
+import {SecretDocumentClient} from "../../sdk-js/src/index";
+import { Config } from "../../sdk-js/src/index";
+import { IPFSStorage } from "../../sdk-js/src/StoreDocument/storage/IPFSStorage";
+import { useWalletClient } from "@dynamic-labs/sdk-react-core";
+    
 function PreviewBookDetail() {
+
+    const config = new Config();
+
+    // You can use your Wagmi wallet from client with:
+    // import the wallet client from the dynamic context
+    
+    const { data: walletClient } = useWalletClient();
+    config.useEvmWallet({
+        client: walletClient
+    })
+    config.useStorage(new IPFSStorage()) // Store files on IPFS.
+
+    // Initialize the client.
+    const client = new SecretDocumentClient(config);
+    
     return (
         <>
             <div className="px-52 py-10 bg-dao-primary w-full">
@@ -165,7 +184,14 @@ function PreviewBookDetail() {
                                 <div
                                     className="grow shrink basis-0 justify-center items-center gap-1 flex">
                                     <Link
-                                        to="/book/publishing"
+                                        onClick={ async () => {
+                                            //retrieve the file created on previous step
+                                            const file = new File([''], 'filename.pdf', { type: 'application/pdf' });
+
+                                            console.log('Publishing');
+                                            const res = await client.storeDocument().fromFile(file); // file must be of type File.
+                                            console.log(res);
+                                        }}
                                         className="text-neutral-50 text-center text-base font-bold font-['DM Sans'] leading-snug
                                         px-8 py-3 bg-dao-primary rounded-lg w-full">
                                         Publish now
