@@ -17,11 +17,9 @@ function Login() {
                         <div className="basis-2/3 py-40 justify-start items-center gap-20 flex-col">
                             <div className="flex-col justify-start items-start gap-6 inline-flex">
                                 <div className="text-neutral-50 text-6xl font-bold font-['Arvo']">
-                                    The platform for managing your book collections & selling your creations.
+                                    Open source publishing software to bring the world's literature to the world's people.
                                 </div>
-                                <div className="text-neutral-50 text-xl font-normal">
-                                    Please log in or sign up to continue
-                                </div>
+                                
                             </div>
 
                             <div className="mt-10">
