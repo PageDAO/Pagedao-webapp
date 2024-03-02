@@ -19,9 +19,7 @@ function Login() {
                                 <div className="text-neutral-50 text-6xl font-bold font-['Arvo']">
                                     The platform for managing your book collections & selling your creations.
                                 </div>
-                                <div className="text-neutral-50 text-xl font-normal">
-                                    Please log in or sign up to continue
-                                </div>
+                                
                             </div>
 
                             <div className="mt-10">
