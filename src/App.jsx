@@ -9,6 +9,7 @@ import AddBook from "./template/Project/AddBook.jsx";
 import PreviewBook from "./template/Project/PreviewBook.jsx";
 import Publishing from "./template/Project/Publishing.jsx";
 import PublishingDone from "./template/Project/PublishingDone.jsx";
+import AuthorProfile from './template/AuthorProfile/AuthorProfile.jsx';
 
 function App() {
     const isLoggedIn = useIsLoggedIn();
@@ -18,6 +19,10 @@ function App() {
         {
             path: "/",
             element: isLoggedIn ? <Dashboard/> : <Login/>,
+        },
+        {
+            path: "/profile/:userId",
+            element: <AuthorProfile/>
         },
         {
             path: "/project",
