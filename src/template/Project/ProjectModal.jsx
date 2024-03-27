@@ -1,8 +1,9 @@
 import {Book, XCircle} from 'lucide-react';
-
 import Modal from "react-modal";
 import React, {useState} from "react";
 import CollaboratorsComponent from "../Forms/Collaborators.jsx";
+import { useUserUpdateRequest,DynamicContextProvider,useDynamicContext} from '@dynamic-labs/sdk-react-core';
+import { list } from 'postcss';
 
 const customStyles = {
     content: {
@@ -25,12 +26,60 @@ const customStyles = {
 };
 
 Modal.setAppElement('#root');
-
-// ToDo: Check if is a new project or an existing one and populates the form accordingly
+class Project{
+constructor(projectName,description,Releases){
+    this.projectName=projectName;
+    this.description=description;
+    this.Releases=Releases
+}
+}
+class Releases{
+    constructor(NFTName,NFTDescription,Supply,Genre,Chain_agnostics_id){
+        this.NFTName=NFTName;
+        this.NFTDescription=NFTDescription;
+        this.Supply=Supply;
+        this.Genre=Genre;
+        this.Chain_agnostics_id=Chain_agnostics_id;
+    }
+}
 
 function ProjectModal({modalIsOpen, setIsOpen}) {
-
+    
+    const { user } = useDynamicContext();
+    const { updateUser } = useUserUpdateRequest();
+    const [projectName,setProjectName ] = useState('11');
+    const [description, setDescription] = useState('22');
+    const[NFTName,setNFTName]=useState('1')
+    const[NFTDescription,setNFTDescription]=useState('2')
+    const[Supply,setSupply]=useState('3')
+    const[Genre,setGenre]=useState('4')
+    const[Chain_agnostics_id,setChain_agnostics_id]=useState('5')
     const [collaborators, setCollaborators] = useState([{address: ''}]);
+    const [projects,setProjects]=useState({});
+  
+    const  handleUpdate=()=>{
+        const releases=new Releases(NFTName,NFTDescription,Supply,Genre,Chain_agnostics_id);
+        const project=new Project(projectName,description,releases);
+        
+        const Projects={...projects};
+        Projects[Date.now()]=project;
+        setProjects(Projects);
+        const fields={
+            metadata:{Projects}
+        };
+    updateUser(fields)
+    .then((updatedFields)=>{
+        alert('Success',
+        'Profile updated successfully', 'success',
+        JSON.stringify(updatedFields));
+        console.log("updated", updatedFields);
+      })
+      
+      .catch((errorMessage) => {
+        alert(errorMessage);
+      });
+    };
+
 
     function afterOpenModal() {
         console.log("Modal Opened");
@@ -60,6 +109,11 @@ function ProjectModal({modalIsOpen, setIsOpen}) {
         >
             <div
                 className="p-8 bg-neutral-100 rounded-lg flex-col justify-start items-start gap-8 inline-flex">
+                <div>
+                    {/* <h2>{user.metadata.projectName}</h2>
+                    <p>{user.metadata.description}</p> */}
+                        <p>{}</p>
+                </div>
                 <div className="flex-col justify-start items-start gap-6 flex ">
                     <div className="self-stretch justify-between items-start inline-flex">
                         <div
@@ -104,6 +158,8 @@ function ProjectModal({modalIsOpen, setIsOpen}) {
                                                         name="project_name"
                                                         type="text"
                                                         placeholder="Write your project name"
+                                                        value={projectName}
+                                                        onChange={(e)=>setProjectName(e.target.value)}
                                                     />
                                                 </div>
                                             </div>
@@ -129,6 +185,8 @@ function ProjectModal({modalIsOpen, setIsOpen}) {
                                                         className="p-4 text-black text-base font-normal font-['DM Sans'] leading-snug w-full focus:outline-none"
                                                         name="description"
                                                         placeholder="Write a good description"
+                                                        value={description}
+                                                        onChange={(e)=>setDescription(e.target.value)}
                                                         rows="5"
                                                     ></textarea>
                                                 </div>
@@ -170,7 +228,7 @@ function ProjectModal({modalIsOpen, setIsOpen}) {
                     className="self-stretch justify-center items-center gap-1 inline-flex">
                     <button
                         type="submit"
-                        onClick={createProject}
+                        onClick={handleUpdate}
                         className="px-8 py-3 bg-dao-primary rounded-lg text-neutral-50 text-base font-bold font-['DM Sans'] leading-snug w-full"
                     >
                         Create
