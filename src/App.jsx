@@ -50,9 +50,6 @@ function App() {
         },
     ]);
 
-    console.log('isLoggedIn', isLoggedIn ? 'true' : 'false')
-    console.log('user', user)
-
     return (
         <>
             <RouterProvider router={router} />
