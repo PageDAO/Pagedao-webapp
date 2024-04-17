@@ -1,0 +1,71 @@
+.img-thumbnail {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  overflow: hidden;
+ 
+}
+.img-thumbnail img.img-circle {
+  width: 100%; 
+  height: 100%; 
+  object-fit: cover;
+  border-radius: 50%;
+}
+.container{
+  position: relative;
+}
+.overlay{
+  background-color: rgba(23, 53, 159, 0.5);
+  position: absolute;
+  height: 100%;
+  border-radius: 50%;
+  opacity: 0;
+}
+.overlay:hover{
+  opacity: 1;
+}
+
+.image-upload {
+  position: absolute;
+  top: 0;
+  left: 0;  
+}
+
+.image-upload label {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.image-upload img {
+  width: 30px; 
+  height: 24px;
+  object-fit: cover;
+  cursor: pointer;
+  margin: auto;
+  margin-top: 38px;
+}
+
+.workspace {
+  background-color: #E6E6E6;
+  padding: 10px 0;
+}
+.tabs {
+  font-weight: 100;
+}
+.active-tabs {
+  font-weight: 600;
+}
+
+.text-small {
+  font-size: 12px;
+}
+.text-medium {
+  font-size: 16px;
+}
+.text-large {
+  font-size: 40px;
+}
+.text-ex-large {
+  font-size: 64px;
+}

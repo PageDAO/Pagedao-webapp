@@ -1,9 +1,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-
 import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
-
 import AuthorInfo from './AuthorInfo';
 import AuthorGallery from './AuthorGallery';
 import axios from 'axios';
@@ -49,16 +47,18 @@ function AuthorProfile() {
     }, [author, user, userId]); // Re-run the effect when userId changes
     
 
-
     return (
         <>
             <TopNav/>
+            <div className="workspace">
             {author?(
-                <>
+                <div className="container mx-auto">
                     <AuthorInfo author={author} isCurrentUser={isCurrentUser} />
                     <AuthorGallery books={author} isCurrentUser={isCurrentUser} />
-                </>
+                
+                </div>
             ):(<p>Loading...</p>)}
+            </div>
             <Footer/>
         </>
     );
