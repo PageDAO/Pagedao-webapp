@@ -4,6 +4,7 @@ import Footer from "../Layout/Footer.jsx";
 import AddBookDetail from "./AddBookDetail.jsx";
 import { useParams } from "react-router-dom";
 import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
+import { useState } from "react";
 
 function AddBook() {
 
@@ -12,7 +13,8 @@ function AddBook() {
     const {projectIndex} = useParams();
     const { user } = useDynamicContext();
     const projectInfo = user?.metadata?.projects[projectIndex];
-    /*
+
+   /*
     const projectInfo = {
         title: "Project Title",
         description: "Project Description",
@@ -62,7 +64,7 @@ function AddBook() {
             <div className="container mx-auto">
                 Add a new item to your project.
             </div>
-            <AddBookDetail/>
+            <AddBookDetail project={projectInfo} projectIndex={projectIndex}/>
             <Footer/>
         </>
     )

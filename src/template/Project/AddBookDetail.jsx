@@ -2,45 +2,13 @@ import React, {useState} from "react";
 import {Link} from "react-router-dom";
 import {Percent, UploadCloud} from "lucide-react";
 import { degrees, PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
 
-
-async function modifyPdf(pdfdata, coverImage, percentagePreview) {
-    // switch this to use the data from parameter
-    //const url = 'https://pdf-lib.js.org/assets/with_update_sections.pdf'
-    const existingPdfBytes = await fetch(url).then(res => res.arrayBuffer())
-  
-    const pdfDoc = await PDFDocument.load(existingPdfBytes)
-    const helveticaFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
-  
-    const pages = pdfDoc.getPages()
-    const previewLength = Math.round(pages.length * (percentagePreview / 100));
-    console.log("previewLength", previewLength);
-
-    const { width, height } = pages[0].getSize();
-    const firstPage = pdfDoc.insertPage(0,[width,height]);
-    firstPage.drawImage(coverImage);
-
-    // removePages
-    for (let i = previewLength; i < pages.length; i++) {
-        pdfDoc.removePage(i);
-    }
-    const previewPage = pdfDoc.addPage([width, height]);
-    previewPage.drawText('Owners can view this work in full at PageDAO.org', {
-      x: 5,
-      y: height / 2 + 300,
-      size: 50,
-      font: helveticaFont,
-      color: rgb(0.95, 0.1, 0.1),
-      rotate: degrees(-45),
-    })
-  
-    const pdfBytes = await pdfDoc.save();
-    return pdfBytes;
-  }
-
-function AddBookDetail() {
+function AddBookDetail({project, projectIndex}) {
+    const { user } = useDynamicContext();
     const [coverImage, setCoverImage] = useState(null);
     const [isHovering, setIsHovering] = useState(false);
+    const [allowPreview, setAllowPreview] = useState(false);
     const [pdfData, setPdfData] = useState(null);
     const [pdfPreview, setPdfPreview] = useState(null);
 
@@ -62,14 +30,62 @@ function AddBookDetail() {
     };
 
     const uploadToAPI = () => {
-        const formData = new FormData();
+        //const formData = new FormData();
         // `coverImageFile` must be the actual file selected, not the URL/base64.
         // This may require to store the file in the state in addition to its URL/base64.
-        formData.append("image", coverImageFile);
+        //formData.append("image", coverImageFile);
         // Later we should make the request to our API with formData
         // For example: axios.post('yourAPI/uploadImage', formData);
     };
 
+    const saveDraft = () => {
+        console.log("saving draft...");
+        //todo: upload coverimage to ipfs
+        uploadToAPI(coverImage);
+
+        //todo: modify pdf and upload to ipfs
+        //todo: do encryption and save key to user profile for project.item.encryptedfile and project.item.encryptionKey
+        //todo: create html file at this step... no... we can do that later
+    };
+
+    const handleAllowPreviewChange = (event) => {
+        setAllowPreview(!event.target.checked);
+        console.log("allowPreview", allowPreview);
+    }
+
+    const modifyPdf = async function (pdfdata, coverImage, percentagePreview) {
+        // switch this to use the data from parameter
+        //const url = 'https://pdf-lib.js.org/assets/with_update_sections.pdf'
+        const existingPdfBytes = await fetch(url).then(res => res.arrayBuffer())
+      
+        const pdfDoc = await PDFDocument.load(existingPdfBytes)
+        const helveticaFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
+      
+        const pages = pdfDoc.getPages()
+        const previewLength = Math.round(pages.length * (percentagePreview / 100));
+        console.log("previewLength", previewLength);
+    
+        const { width, height } = pages[0].getSize();
+        const firstPage = pdfDoc.insertPage(0,[width,height]);
+        firstPage.drawImage(coverImage);
+    
+        // removePages
+        for (let i = previewLength; i < pages.length; i++) {
+            pdfDoc.removePage(i);
+        }
+        const previewPage = pdfDoc.addPage([width, height]);
+        previewPage.drawText('Owners can view this work in full at PageDAO.org', {
+          x: 5,
+          y: height / 2 + 300,
+          size: 50,
+          font: helveticaFont,
+          color: rgb(0.95, 0.1, 0.1),
+          rotate: degrees(-45),
+        })
+      
+        const pdfBytes = await pdfDoc.save();
+        return pdfBytes;
+      }
     return (
         <>
             <div className="w-full bg-neutral-100">
@@ -261,7 +277,7 @@ function AddBookDetail() {
                                         </div>
                                         <div className="relative">
                                             <label htmlFor="allow_preview">
-                                                <input id="allow_preview" type="checkbox" className="bigCheckBox"/>
+                                                <input id="allow_preview" onChange={handleAllowPreviewChange} type="checkbox" className="bigCheckBox"/>
                                             </label>
                                         </div>
                                     </div>
@@ -298,18 +314,19 @@ function AddBookDetail() {
                             <div className="self-stretch justify-start items-start gap-4 inline-flex">
                                 <div
                                     className="justify-center items-center gap-1 flex">
-                                    <div
-                                        className="px-16 py-3 rounded-lg border border-neutral-800 text-neutral-800 text-base font-bold font-['DM Sans'] leading-snug">
+                                    <button
+                                        className="px-16 py-3 rounded-lg border border-neutral-800 text-neutral-800 text-base font-bold font-['DM Sans'] leading-snug"
+                                        onClick={saveDraft}>
                                         Save draft
-                                    </div>
+                                    </button>
                                 </div>
                                 <div
                                     className="grow shrink basis-0 justify-center items-center gap-1 flex">
-                                    <Link
-                                        to="/book/preview"
+                                    {/* call save and then navigate to preview page */}
+                                    <button
                                         className="px-8 py-3 bg-dao-primary rounded-lg text-center text-neutral-50 text-base font-bold font-['DM Sans'] leading-snug w-full">
                                         Next, Preview
-                                    </Link>
+                                    </button>
                                 </div>
                             </div>
                         </div>
