@@ -11,6 +11,7 @@ import Publishing from "./template/Project/Publishing.jsx";
 import PublishingDone from "./template/Project/PublishingDone.jsx";
 import AuthorProfile from './template/AuthorProfile/AuthorProfile.jsx';
 import Marketplace from './template/Marketplace/Marketplace.jsx';
+import EditAuthorInfo from './template/AuthorProfile/EditAuthorInfo.jsx';
 
 function App() {
     const isLoggedIn = useIsLoggedIn();
@@ -24,6 +25,10 @@ function App() {
         {
             path: "/profile/:userId",
             element: <AuthorProfile/>
+        },
+        {
+            path: "/editprofile/:userId",
+            element: <EditAuthorInfo/>
         },
         {
             path: "/project",

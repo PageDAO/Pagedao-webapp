@@ -1,12 +1,11 @@
 import {Book, XCircle} from 'lucide-react';
-
 import Modal from "react-modal";
 //import CollaboratorsComponent from "../Forms/Collaborators.jsx";
-import { useUserUpdateRequest } from '@dynamic-labs/sdk-react-core';
-import {useDynamicContext} from "@dynamic-labs/sdk-react-core";
 import { isTemplateSpan } from 'typescript';
 
 
+import { useUserUpdateRequest,DynamicContextProvider,useDynamicContext} from '@dynamic-labs/sdk-react-core';
+import { list } from 'postcss';
 
 const customStyles = {  
     content: {
@@ -29,8 +28,22 @@ const customStyles = {
 };
 
 Modal.setAppElement('#root');
-
-// ToDo: Check if is a new project or an existing one and populates the form accordingly
+class Project{
+constructor(projectName,description,Releases){
+    this.projectName=projectName;
+    this.description=description;
+    this.Releases=Releases
+}
+}
+class Releases{
+    constructor(NFTName,NFTDescription,Supply,Genre,Chain_agnostics_id){
+        this.NFTName=NFTName;
+        this.NFTDescription=NFTDescription;
+        this.Supply=Supply;
+        this.Genre=Genre;
+        this.Chain_agnostics_id=Chain_agnostics_id;
+    }
+}
 
 function ProjectModal({modalIsOpen, setIsOpen, projectIndex}) {
 
@@ -141,6 +154,8 @@ function ProjectModal({modalIsOpen, setIsOpen, projectIndex}) {
                                                         name="project_name"
                                                         type="text"
                                                         placeholder="Write your project name"
+                                                        value={projectName}
+                                                        onChange={(e)=>setProjectName(e.target.value)}
                                                     />
                                                 </div>
                                             </div>
@@ -166,6 +181,8 @@ function ProjectModal({modalIsOpen, setIsOpen, projectIndex}) {
                                                         className="p-4 text-black text-base font-normal font-['DM Sans'] leading-snug w-full focus:outline-none"
                                                         name="description"
                                                         placeholder="Write a good description"
+                                                        value={description}
+                                                        onChange={(e)=>setDescription(e.target.value)}
                                                         rows="5"
                                                     ></textarea>
                                                 </div>
