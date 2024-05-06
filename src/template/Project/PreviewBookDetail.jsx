@@ -1,6 +1,8 @@
 import {Link} from "react-router-dom";
+import PdfModal from "../PdfModal/PdfModal";
     
 function PreviewBookDetail() {    
+    const [pdfPreview, setPdfPreview] = useState();
     return (
         <>
             <div className="px-52 py-10 bg-dao-primary w-full">
@@ -22,7 +24,7 @@ function PreviewBookDetail() {
                                 <div
                                     className="flex-col justify-start items-center gap-4 inline-flex">
                                     <div className="relative">
-                                        <img src="https://picsum.photos/358/467" alt="cover" className="rounded-xl"/>
+                                        <PdfModal data={pdfPreview}/>
                                     </div>
                                 </div>
                             </div>

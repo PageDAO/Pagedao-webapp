@@ -29,7 +29,6 @@ function Login() {
 
                         {/* Login Form */}
                         <div className="basis-1/3">
-
                             <div className="bg-gray-50 rounded-lg p-10">
                                 <DynamicEmbeddedWidget/>
                             </div>

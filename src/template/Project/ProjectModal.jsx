@@ -1,10 +1,14 @@
 import {Book, XCircle} from 'lucide-react';
 
 import Modal from "react-modal";
-import React, {useState} from "react";
-import CollaboratorsComponent from "../Forms/Collaborators.jsx";
+//import CollaboratorsComponent from "../Forms/Collaborators.jsx";
+import { useUserUpdateRequest } from '@dynamic-labs/sdk-react-core';
+import {useDynamicContext} from "@dynamic-labs/sdk-react-core";
+import { isTemplateSpan } from 'typescript';
 
-const customStyles = {
+
+
+const customStyles = {  
     content: {
         backgroundColor: 'transparent',
         border: 'none',
@@ -28,26 +32,61 @@ Modal.setAppElement('#root');
 
 // ToDo: Check if is a new project or an existing one and populates the form accordingly
 
-function ProjectModal({modalIsOpen, setIsOpen}) {
+function ProjectModal({modalIsOpen, setIsOpen, projectIndex}) {
 
-    const [collaborators, setCollaborators] = useState([{address: ''}]);
-
-    function afterOpenModal() {
-        console.log("Modal Opened");
-    }
-
-    function closeModal() {
-        setIsOpen(false);
-    }
+    //const [collaborators, setCollaborators] = useState([{address: ''}]);
+    const {user} = useDynamicContext();
+    const { updateUser } = useUserUpdateRequest();
 
     function createProject(data) {
-        console.log("Create project", data);
+        const newProject = {
+            title: data.project_name.value,
+            description: data.description.value,
+            items: [],
+        };
+
+        // Get the existing projects from user.metadata, or create an empty array if it doesn't exist
+        const existingProjects = user.metadata && user.metadata.projects ? user.metadata.projects : [];
+    
+        console.log("existingProjects", existingProjects);
+
+        // Add the new project to the existing projects
+        existingProjects.push(newProject);    
+        
+           // Create the userFields object
+        const userFields = {
+            "metadata": {
+                projects: existingProjects
+            }
+        };
+        
+        const handleSave = async (userFields) => {
+            const {
+              updateUserProfileResponse,
+            } = await updateUser(userFields, import.meta.env.VITE_APP_DYNAMIC_ENVIRONMENT_ID);
+        
+            // Handle successful update without email verification, e.g., show a success message or redirect
+            console.log("saved profile", userFields, updateUserProfileResponse);
+            closeModal();
+            
+            console.log("user after save", user);
+        }
+        
+        handleSave(userFields);
     }
 
     function handleSubmit(event) {
         event.preventDefault();
         console.log(event);
-        console.log(collaborators);
+        createProject(event.target);
+      //  console.log(collaborators);
+    }
+
+    function afterOpenModal() {
+    }
+
+    function closeModal() {
+        setIsOpen(false);
     }
 
     return (
@@ -60,10 +99,13 @@ function ProjectModal({modalIsOpen, setIsOpen}) {
         >
             <div
                 className="p-8 bg-neutral-100 rounded-lg flex-col justify-start items-start gap-8 inline-flex">
+                <form action={createProject} onSubmit={handleSubmit}>
+
                 <div className="flex-col justify-start items-start gap-6 flex ">
                     <div className="self-stretch justify-between items-start inline-flex">
                         <div
                             className=" text-neutral-800 text-2xl font-bold font-['Arvo'] leading-normal">
+                            <Book className="w-10 h-10 text-gray-400"/>
                             Create a new project
                         </div>
                         <div>
@@ -75,15 +117,10 @@ function ProjectModal({modalIsOpen, setIsOpen}) {
                         </div>
                     </div>
                     <div className="self-stretch  flex-col justify-start items-start gap-4 flex">
-                        <form action={createProject} onSubmit={handleSubmit}>
                             <div
                                 className="self-stretch  flex-col justify-start items-start gap-8 flex">
                                 <div
                                     className="self-stretch  flex-col justify-start items-start gap-2 flex">
-                                    <div
-                                        className="p-4 bg-neutral-50 rounded-lg justify-start items-start gap-2 inline-flex">
-                                        <Book className="w-10 h-10 text-gray-400"/>
-                                    </div>
                                     <div
                                         className="self-stretch isOpened rounded-lg flex-col justify-start items-start gap-1 flex">
                                         <div
@@ -136,7 +173,7 @@ function ProjectModal({modalIsOpen, setIsOpen}) {
                                         </div>
                                     </div>
                                 </div>
-                                <div
+{/*                             <div
                                     className="self-stretch isOpened flex-col justify-start items-start gap-6 flex"
                                 >
                                     <div
@@ -161,22 +198,22 @@ function ProjectModal({modalIsOpen, setIsOpen}) {
                                         <CollaboratorsComponent collaborators={collaborators}
                                                                 setCollaborators={setCollaborators}/>
                                     </div>
-                                </div>
+    </div>*/}
                             </div>
-                        </form>
+                        
                     </div>
                 </div>
                 <div
                     className="self-stretch justify-center items-center gap-1 inline-flex">
                     <button
                         type="submit"
-                        onClick={createProject}
                         className="px-8 py-3 bg-dao-primary rounded-lg text-neutral-50 text-base font-bold font-['DM Sans'] leading-snug w-full"
                     >
                         Create
                     </button>
 
                 </div>
+                </form>
             </div>
         </Modal>
     )

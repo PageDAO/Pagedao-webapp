@@ -6,6 +6,7 @@ import CollapsableItemSection from "./CollapsableItemSection.jsx";
 
 function CollapsableSection(
     {
+        projectIndex,
         title,
         items,
         emptyContent,
@@ -50,6 +51,7 @@ function CollapsableSection(
                                 {items.map((item, index) => (
                                     <CollapsableItemSection
                                         key={index}
+                                        index={index}
                                         title={title}
                                         item={item}
                                         emptyContent={emptyContent}

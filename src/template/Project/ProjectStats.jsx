@@ -31,7 +31,7 @@ function ProjectStats() {
                             className="self-stretch pb-2 border-b border-neutral-500 flex-col justify-start items-start gap-2 flex">
                             <div
                                 className="text-neutral-800 text-xl font-normal font-['DM Sans'] leading-7">Number
-                                of book
+                                of items
                             </div>
                             <div
                                 className="text-right text-neutral-800 text-xl font-bold font-['DM Sans'] leading-7">0

@@ -12,7 +12,9 @@ function TopNav() {
         <>
             <div className="container mx-auto pt-6 pb-4 justify-between items-center flex">
                 <div className="basis-1/3">
-                    Marketplace
+                    <Link to={'/marketplace'}>
+                        Marketplace
+                    </Link>
                 </div>
                 <div className="basis-1/3 items-center justify-center text-center flex">
                     <img src={icon} alt="icon" className="w-10 h-10"/>

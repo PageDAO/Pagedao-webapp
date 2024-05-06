@@ -10,6 +10,7 @@ import PreviewBook from "./template/Project/PreviewBook.jsx";
 import Publishing from "./template/Project/Publishing.jsx";
 import PublishingDone from "./template/Project/PublishingDone.jsx";
 import AuthorProfile from './template/AuthorProfile/AuthorProfile.jsx';
+import Marketplace from './template/Marketplace/Marketplace.jsx';
 
 function App() {
     const isLoggedIn = useIsLoggedIn();
@@ -26,14 +27,18 @@ function App() {
         },
         {
             path: "/project",
-            element: isLoggedIn ? <Project/> : <Login/>,
+            element: <Dashboard/>,
         },
         {
-            path: "/book/add",
+            path: "/project/:projectIndex",
+            element: isLoggedIn ? <Project /> : <Login/>,
+        },
+        {
+            path: "/book/add/:projectIndex",
             element: isLoggedIn ? <AddBook/> : <Login/>,
         },
         {
-            path: "/book/edit",
+            path: "/book/edit/:projectIndex",
             element: isLoggedIn ? <AddBook/> : <Login/>,
         },
         {
@@ -48,6 +53,10 @@ function App() {
             path: "/book/publishing-done",
             element: isLoggedIn ? <PublishingDone/> : <Login/>,
         },
+        {
+            path: "/marketplace",
+            element: <Marketplace/>
+        }
     ]);
 
     return (

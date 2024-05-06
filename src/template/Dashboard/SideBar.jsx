@@ -1,4 +1,7 @@
+import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
 function SideBar() {
+    const { user } = useDynamicContext();
+    const projects = user?.metadata?.projects;
     return (
         <>
             <div
@@ -13,18 +16,18 @@ function SideBar() {
                             className="self-stretch pb-2 border-b border-zinc-500 justify-between items-start inline-flex">
                             <div
                                 className="text-neutral-800 text-xl font-normal font-['DM Sans'] leading-7">
-                                Book created
+                                Projects created
                             </div>
                             <div
                                 className="text-right text-neutral-800 text-xl font-bold font-['DM Sans'] leading-7">
-                                0
+                                {projects?.length}
                             </div>
                         </div>
                         <div
                             className="self-stretch pb-2 border-b border-neutral-500 justify-between items-start inline-flex">
                             <div
                                 className="text-neutral-800 text-xl font-normal font-['DM Sans'] leading-7">
-                                Book purchased
+                                Items purchased
                             </div>
                             <div
                                 className="text-right text-neutral-800 text-xl font-bold font-['DM Sans'] leading-7">
@@ -36,7 +39,7 @@ function SideBar() {
                 <div className="py-20 relative bg-rose-100 w-full text-center mt-10">
                     <div
                         className="text-black text-base font-bold font-['DM Sans'] leading-snug">
-                        bar chart here, maybe
+                        
                     </div>
                 </div>
             </div>

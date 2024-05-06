@@ -1,10 +1,48 @@
 import React, {useState} from "react";
 import {Link} from "react-router-dom";
 import {Percent, UploadCloud} from "lucide-react";
+import { degrees, PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+
+
+async function modifyPdf(pdfdata, coverImage, percentagePreview) {
+    // switch this to use the data from parameter
+    //const url = 'https://pdf-lib.js.org/assets/with_update_sections.pdf'
+    const existingPdfBytes = await fetch(url).then(res => res.arrayBuffer())
+  
+    const pdfDoc = await PDFDocument.load(existingPdfBytes)
+    const helveticaFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
+  
+    const pages = pdfDoc.getPages()
+    const previewLength = Math.round(pages.length * (percentagePreview / 100));
+    console.log("previewLength", previewLength);
+
+    const { width, height } = pages[0].getSize();
+    const firstPage = pdfDoc.insertPage(0,[width,height]);
+    firstPage.drawImage(coverImage);
+
+    // removePages
+    for (let i = previewLength; i < pages.length; i++) {
+        pdfDoc.removePage(i);
+    }
+    const previewPage = pdfDoc.addPage([width, height]);
+    previewPage.drawText('Owners can view this work in full at PageDAO.org', {
+      x: 5,
+      y: height / 2 + 300,
+      size: 50,
+      font: helveticaFont,
+      color: rgb(0.95, 0.1, 0.1),
+      rotate: degrees(-45),
+    })
+  
+    const pdfBytes = await pdfDoc.save();
+    return pdfBytes;
+  }
 
 function AddBookDetail() {
     const [coverImage, setCoverImage] = useState(null);
     const [isHovering, setIsHovering] = useState(false);
+    const [pdfData, setPdfData] = useState(null);
+    const [pdfPreview, setPdfPreview] = useState(null);
 
     const uploadButtonClasses = ({
         'px-14 py-24 flex-col justify-start items-center gap-4 inline-flex': true,
@@ -31,7 +69,6 @@ function AddBookDetail() {
         // Later we should make the request to our API with formData
         // For example: axios.post('yourAPI/uploadImage', formData);
     };
-
 
     return (
         <>
@@ -91,7 +128,7 @@ function AddBookDetail() {
                                                 className="self-stretch justify-start items-start gap-2.5 inline-flex">
                                                 <div
                                                     className="text-neutral-500 text-sm font-normal font-['DM Sans'] leading-tight">
-                                                    Book file
+                                                    Book file <i>(PDF only)</i>
                                                 </div>
                                             </div>
                                             <div
@@ -114,13 +151,6 @@ function AddBookDetail() {
 
                                                     />
                                                 </div>
-                                            </div>
-                                        </div>
-                                        <div
-                                            className="self-stretch px-4 justify-start items-start gap-2.5 inline-flex">
-                                            <div
-                                                className="text-gray-600 text-sm font-normal font-['DM Sans'] leading-tight">Only
-                                                .pdf is supported at this moment.
                                             </div>
                                         </div>
                                     </div>
