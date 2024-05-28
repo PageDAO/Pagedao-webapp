@@ -6,13 +6,13 @@ import { EthersExtension } from "@dynamic-labs/ethers-v5";
 import walletLogo from "./assets/logo-dynamic.svg";
 
 import { EthereumWalletConnectors } from "@dynamic-labs/ethereum";
-import { AlgorandWalletConnectors } from "@dynamic-labs/algorand";
+//import { AlgorandWalletConnectors } from "@dynamic-labs/algorand";
 import { SolanaWalletConnectors } from "@dynamic-labs/solana";
-import { FlowWalletConnectors } from "@dynamic-labs/flow";
-import { StarknetWalletConnectors } from "@dynamic-labs/starknet";
+//import { FlowWalletConnectors } from "@dynamic-labs/flow";
+//import { StarknetWalletConnectors } from "@dynamic-labs/starknet";
 import { CosmosWalletConnectors } from "@dynamic-labs/cosmos";
-import { MagicWalletConnectors } from "@dynamic-labs/magic";
-import { BloctoEvmWalletConnectors } from "@dynamic-labs/blocto-evm";
+//import { MagicWalletConnectors } from "@dynamic-labs/magic";
+//import { BloctoEvmWalletConnectors } from "@dynamic-labs/blocto-evm";
 
 import { reservoirChains } from "@reservoir0x/reservoir-sdk";
 import {
@@ -20,10 +20,14 @@ import {
   lightTheme,
 } from "@reservoir0x/reservoir-kit-ui";
 import { DynamicWagmiConnector } from "@dynamic-labs/wagmi-connector";
-import { createConfig, WagmiProvider, useAccount } from "wagmi";
+import { createConfig, WagmiProvider } from "wagmi";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { http } from "viem";
-import { mainnet, polygon, base, optimism, moonbeam, evmos } from "viem/chains";
+import { mainnet, polygon, base, optimism, moonbeam, evmos, zora } from "viem/chains";
+import { MetaMaskWallet } from "secretjs";
+import { metaMask } from "wagmi/connectors";
+import {} from "viem/accounts";
+
 
 const evmNetworks = [
   {
@@ -149,8 +153,10 @@ const evmNetworks = [
   },
 ];
 
+const degenChain = evmNetworks[5];
+
 const config = createConfig({
-  chains: [mainnet, polygon, moonbeam, optimism, base, evmos],
+  chains: [mainnet, polygon, moonbeam, optimism, base, evmos, degenChain, zora, evmos],
   multiInjectedProviderDiscovery: false,
   transports: {
     [mainnet.id]: http(),
@@ -178,6 +184,19 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         ],
         evmNetworks,
         appLogoUrl: walletLogo,
+        events: {
+          onAuthSuccess: (args) => {
+            console.log('onAuthSuccess was called', args);
+            const ethAddress = args.primaryWallet.address;
+            // set up the user's secretjs metamask wallet if I can
+            args.primaryWallet.getPubKey().then((pubkey) => {
+              console.log('pubkey', pubkey);
+              localStorage.setItem(`secretjs_${ethAddress}_pubkey`, pubkey);
+              const secretjsWallet = new MetaMaskWallet.create(args.primaryWallet.connector.getWalletClient().getPubKey(), ethAddress);
+              console.log('secretjsWallet', secretjsWallet);
+            });
+          }
+        }
       }}
     >
       <WagmiProvider config={config}>

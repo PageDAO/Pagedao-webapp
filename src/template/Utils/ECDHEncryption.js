@@ -1,9 +1,9 @@
-import { randomBytes } from "crypto";
+import { randomBytes } from "randombytes-pure";
 import secp256k1 from "secp256k1";
 import { SIV, PolyfillCryptoProvider } from "miscreant";
 import { toUtf8 } from "@cosmjs/encoding";
 
-function getPrivateKey(): Uint8Array {
+function getPrivateKey() {
   while (true) {
     const privateKey = randomBytes(32);
     if (secp256k1.privateKeyVerify(privateKey)) {
@@ -26,13 +26,13 @@ function generate() {
  * Generate a shared key from a public key and a private key destined for the smart contract.
  */
 function generateSharedKey(
-  publicKey: Uint8Array,
-  privateKey: Uint8Array,
-): Uint8Array {
+  publicKey,
+  privateKey,
+) {
   return secp256k1.ecdh(publicKey, privateKey);
 }
 
-async function encrypt(data, sharedKey: Uint8Array): Promise<Uint8Array> {
+async function encrypt(data, sharedKey) {
   const provider = new PolyfillCryptoProvider();
   const siv = await SIV.importKey(sharedKey, "AES-SIV", provider);
   const plaintext = toUtf8(JSON.stringify(data));
@@ -46,4 +46,4 @@ const ECDHEncryption = {
   encrypt: encrypt,
 };
 
-export default ECDHEncryption;
+export {ECDHEncryption};

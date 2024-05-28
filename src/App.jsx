@@ -1,7 +1,7 @@
 import './App.css'
 import Login from "./template/Login.jsx";
 import {createBrowserRouter, RouterProvider,} from "react-router-dom";
-import {useDynamicContext, useIsLoggedIn,} from "@dynamic-labs/sdk-react-core";
+import {useIsLoggedIn} from "@dynamic-labs/sdk-react-core";
 import React from "react";
 import Dashboard from "./template/Dashboard/Dashboard.jsx";
 import Project from "./template/Project/Project.jsx";
@@ -15,7 +15,7 @@ import EditAuthorInfo from './template/AuthorProfile/EditAuthorInfo.jsx';
 
 function App() {
     const isLoggedIn = useIsLoggedIn();
-    const {user} = useDynamicContext();
+    //const {user} = useDynamicContext();
 
     const router = createBrowserRouter([
         {
@@ -47,7 +47,7 @@ function App() {
             element: isLoggedIn ? <AddBook/> : <Login/>,
         },
         {
-            path: "/book/preview",
+            path: "/book/preview/:projectIndex/:itemIndex",
             element: isLoggedIn ? <PreviewBook/> : <Login/>,
         },
         {

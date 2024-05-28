@@ -69,6 +69,7 @@ function ProjectDetail({ projectIndex, project }) {
                   projectIndex={projectIndex}
                   project={project}
                   item={item}
+                  itemIndex={index}
                 />
               ))}
             </div>
