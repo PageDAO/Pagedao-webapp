@@ -29,17 +29,20 @@ function Content() {
       tasks.length > 0 ? Math.max(...tasks.map((task) => task.id)) + 1 : 1,
     [tasks]
   );
-  
+
   function openModal() {
     setIsOpen(true);
   }
+
   function editProject(id) {
     setOpen(false);
     window.clearTimeout(timerRef.current);
     timerRef.current = window.setTimeout(() => {
       setOpen(true);
+      setToastMessage("Not currently available");
     }, 100);
   }
+
   function deleteProject(id) {
     setOpen(false);
     window.clearTimeout(timerRef.current);
@@ -52,11 +55,13 @@ function Content() {
       setToastMessage("Project deleted");
     }, 100);
   }
+
   function shareProject(id) {
     setOpen(false);
     window.clearTimeout(timerRef.current);
     timerRef.current = window.setTimeout(() => {
       setOpen(true);
+      setToastMessage("Not currently available");
     }, 100);
   }
   return (

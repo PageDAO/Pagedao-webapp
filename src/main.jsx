@@ -37,6 +37,9 @@ import {} from "viem/accounts";
 import axios from "axios";
 import { TasksProvider } from "./template/Providers/TasksContext";
 
+const marketplaceFee = "5"; // 5% fee on marketplace sales to polygon minter proceeds wallet - should be queried from osmosis daodao api
+const platformFee = "5"; // 5% fee on primary sales to polygon minter proceeds wallet - should be queried from osmosis daodao api
+
 const evmNetworks = [
   {
     blockExplorerUrls: ["https://etherscan.io/"],
@@ -224,7 +227,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             };
             axios
               .post(
-                "http://localhost:3000/auth",
+                `${import.meta.env.VITE_APP_BACKEND_API_URL}/auth`,
                 {
                   data: { userid: args.user.userId },
                 },
@@ -264,7 +267,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           <DynamicWagmiConnector suppressChainMismatchError>
             <ReservoirKitProvider
               options={{
-                apiKey: "b56cc2f7-5b63-5725-bbcc-6555c57c85f6",
+                apiKey: import.meta.env.VITE_APP_RESERVOIR_API_KEY,
                 chains: [
                   {
                     chainId: 137,
@@ -276,12 +279,15 @@ ReactDOM.createRoot(document.getElementById("root")).render(
                 disablePoweredByReservoir: false,
                 preferDisplayFiatTotal: true,
                 marketplaceFees: [
-                  "0xF6D587f6091FD06157C661ea20D8139D7A89C46D:5",
-                ], // 5% fee to polygon minter wallet
+                  `${import.meta.env.VITE_APP_POLYGON_FEE_ADDRESS}:${marketplaceFee}`,
+                ], // 5% fee to polygon minter wallet - should be queried from osmosis daodao api
               }}
               theme={lightTheme}
             >
-              <TasksProvider>
+              <TasksProvider options={{
+                'platformFee': platformFee,
+                'marketplaceFee': marketplaceFee
+              }}>
                 <App />
               </TasksProvider>
             </ReservoirKitProvider>
