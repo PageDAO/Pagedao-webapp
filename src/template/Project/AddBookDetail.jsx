@@ -1,5 +1,4 @@
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { Percent, UploadCloud } from "lucide-react";
 import { degrees, PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import {
@@ -10,6 +9,7 @@ import {
   generateBookFromTemplate,
   pinToIPFS,
   encryptAndStoreItem,
+  fetchMetadata, saveMetadata
 } from "../Utils";
 import { Navigate } from "react-router-dom/dist";
 
@@ -25,24 +25,26 @@ function AddBookDetail({ project, projectIndex, itemIndex }) {
   const [supply, setSupply] = useState(1000);
   const [pdfData, setPdfData] = useState(null);
   const [pdfPreview, setPdfPreview] = useState(null);
+  const [projects, setProjects] = useState([]);
 
   const uploadButtonClasses = {
     "px-14 py-24 flex-col justify-start items-center gap-4 inline-flex": true,
     "bg-neutral-50 bg-opacity-50": isHovering,
   };
 
-  if (!isAuthenticated) return;
-
-  // todo: pull the metadata field (IPFS hash) from the project, then fetch the JSON from IPFS
-  if (project.metadata) {
-    // fetch the metadata from IPFS
-    user.metadata.data = JSON.parse(fetch(`https://ipfs.nftbookbazaar.com/ipfs/${usermetadatahash}`));
-    console.log("user metadata", user.metadata.data);
-  }
-
+  useEffect(() => {
+    if (!isAuthenticated) {
+      Navigate("/login");
+    }
+    async function fetchMeta() {
+        const metadata = await fetchMetadata(user?.metadata.hash);
+        console.log(metadata);
+        setProjects(metadata.projects);
+    }
+    fetchMeta();
+  }, [user?.metadata, isAuthenticated]);
   
   // todo: load form values if the itemIndex is not null
-
   const handleImageUpload = (event) => {
     const file = event.target.files[0];
     if (file && file.type.startsWith("image/")) {
@@ -82,7 +84,7 @@ function AddBookDetail({ project, projectIndex, itemIndex }) {
     // make sure all the variables are set to pass to the next page
     // set pdfPreview - just call saveDraft (todo: add a dirty flag if data has been changed since draft was saved)
     saveDraft();
-    // set projet index [ and item index? ] { projectIndex: projectIndex, itemIndex: itemIndex }
+    // set project index [ and item index? ] { projectIndex: projectIndex, itemIndex: itemIndex }
     // navigate to PreviewBook
   }
 
@@ -164,11 +166,11 @@ function AddBookDetail({ project, projectIndex, itemIndex }) {
     const contractMetadataURI = await uploadToAPI(contractMetadata, "metadata.json");
     projectItem.contractMetadataURI = contractMetadataURI;
     
-//    if (!project.items) project.items = [];
-//    project.items?.push(projectItem);
+    if (!project.items) project.items = [];
+    project.items?.push(projectItem);
 
     // load the user metadata and update the project
-//    updateUserMetadata(user, project, projectIndex);
+    updateUserMetadata(user, project, projectIndex);
 
     // also navigate to the project page
     //Navigate(`/project/${projectIndex}`);
@@ -176,8 +178,8 @@ function AddBookDetail({ project, projectIndex, itemIndex }) {
 
   const updateUserMetadata = (user, project, projectIndex) => {
     // Get the existing projects from user.metadata, or create an empty array if it doesn't exist
-    const existingProjects =
-      user.metadata && user.metadata.projects ? user.metadata.projects : [];
+    const existingProjects = projects;
+//      user.metadata && user.metadata.projects ? user.metadata.projects : [];
 
     // Add the new project to the existing projects
     existingProjects[projectIndex] = project;
@@ -190,8 +192,10 @@ function AddBookDetail({ project, projectIndex, itemIndex }) {
     };
 
     const handleSave = async (userFields) => {
+      const metadataHash = await saveMetadata(userFields.metadata);
+
       const { updateUserProfileResponse } = await updateUser(
-        userFields,
+        {metadata: {'hash': metadataHash}},
         import.meta.env.VITE_APP_DYNAMIC_ENVIRONMENT_ID
       );
 
