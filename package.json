@@ -49,7 +49,7 @@
     "sort-by": "^1.2.0",
     "thirdweb": "^5.23.0",
     "viem": "^2.7.22",
-    "wagmi": "^2.5.7"
+    "wagmi": "^2.8.6"
   },
   "devDependencies": {
     "@babel/core": "^7.23.9",
