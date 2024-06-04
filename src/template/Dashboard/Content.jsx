@@ -10,6 +10,7 @@ import {
   TasksDispatchContext,
 } from "../Providers/TasksContext.js";
 import * as Toast from "@radix-ui/react-toast";
+import { useUserUpdateRequest } from "@dynamic-labs/sdk-react-core";
 
 function Content() {
   const [modalIsOpen, setIsOpen] = React.useState(false);
@@ -19,6 +20,8 @@ function Content() {
 
   const tasks = useContext(TasksContext);
   const dispatch = useContext(TasksDispatchContext);
+  const { updateUser } = useUserUpdateRequest();
+
 
   React.useEffect(() => {
     return () => clearTimeout(timerRef.current);
@@ -30,6 +33,7 @@ function Content() {
     [tasks]
   );
 
+  //todo: fix functionality for opening new item creation only when no items exits
   function openModal() {
     setIsOpen(true);
   }
@@ -45,12 +49,14 @@ function Content() {
 
   function deleteProject(id) {
     setOpen(false);
+    console.log("deleting project id" + id);
     window.clearTimeout(timerRef.current);
     timerRef.current = window.setTimeout(() => {
       setOpen(true);
       dispatch({
         type: "deleted",
         id: id,
+        userUpdateFunction: updateUser,
       });
       setToastMessage("Project deleted");
     }, 100);

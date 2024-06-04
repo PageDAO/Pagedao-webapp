@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useRef, useContext, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Percent, UploadCloud } from "lucide-react";
 import { degrees, PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import {
@@ -9,14 +10,21 @@ import {
   generateBookFromTemplate,
   pinToIPFS,
   encryptAndStoreItem,
-  fetchMetadata, saveMetadata
+  fetchMetadata,
+  saveMetadata,
 } from "../Utils";
-import { Navigate } from "react-router-dom/dist";
+import {
+  TasksContext,
+  TasksDispatchContext,
+} from "../Providers/TasksContext.js";
+import * as Toast from "@radix-ui/react-toast";
 
-function AddBookDetail({ project, projectIndex, itemIndex }) {
-  const { isAuthenticated, user } = useDynamicContext() ;
+function AddBookDetail({ projectIndex, itemIndex }) {
+  const { isAuthenticated, user } = useDynamicContext();
+  const projects = useContext(TasksContext);
   const { updateUser } = useUserUpdateRequest();
-  const [coverImage, setCoverImage] = useState(null);
+  const [isModified, setIsModified] = useState(false);
+  const [coverImage, setCoverImage] = useState();
   const [isHovering, setIsHovering] = useState(false);
   const [allowPreview, setAllowPreview] = useState(false);
   const [percentagePreview, setPercentagePreview] = useState(10);
@@ -25,25 +33,41 @@ function AddBookDetail({ project, projectIndex, itemIndex }) {
   const [supply, setSupply] = useState(1000);
   const [pdfData, setPdfData] = useState(null);
   const [pdfPreview, setPdfPreview] = useState(null);
-  const [projects, setProjects] = useState([]);
+  const [open, setOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+  const timerRef = useRef(0);
+  const dispatch = useContext(TasksDispatchContext);
+  const [newItemID, setNewItemID] = useState(0);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // prepopulate things if itemindex is provided
+    if (itemIndex) {
+      setCoverImage(
+        "https://ipfs.nftbookbazaar.com/ipfs/" +
+          projects[projectIndex].items[itemIndex].image
+      );
+      setBookName(projects[projectIndex].items[itemIndex].name);
+      //todo: save percentage ???    setPercentagePreview(projects[projectIndex].items[itemIndex].previewPages);
+      setDescription(projects[projectIndex].items[itemIndex].description);
+      setSupply(projects[projectIndex].items[itemIndex].supply);
+    }
+  }, [projects, projectIndex, itemIndex]);
 
   const uploadButtonClasses = {
     "px-14 py-24 flex-col justify-start items-center gap-4 inline-flex": true,
     "bg-neutral-50 bg-opacity-50": isHovering,
   };
 
-  useEffect(() => {
-    if (!isAuthenticated) {
-      Navigate("/login");
-    }
-    async function fetchMeta() {
-        const metadata = await fetchMetadata(user?.metadata.hash);
-        console.log(metadata);
-        setProjects(metadata.projects);
-    }
-    fetchMeta();
-  }, [user?.metadata, isAuthenticated]);
-  
+  function showToastMessage(message) {
+    setOpen(false);
+    window.clearTimeout(timerRef.current);
+    timerRef.current = window.setTimeout(() => {
+      setOpen(true);
+      setToastMessage(message);
+    }, 100);
+  }
+
   // todo: load form values if the itemIndex is not null
   const handleImageUpload = (event) => {
     const file = event.target.files[0];
@@ -52,6 +76,8 @@ function AddBookDetail({ project, projectIndex, itemIndex }) {
       reader.onloadend = () => {
         // Update the status with this new image URL
         setCoverImage(reader.result);
+        setIsHovering(false);
+        setIsModified(true);
       };
       reader.readAsDataURL(file);
     }
@@ -63,6 +89,7 @@ function AddBookDetail({ project, projectIndex, itemIndex }) {
       const reader = new FileReader();
       reader.onloadend = () => {
         setPdfData(reader.result);
+        setIsModified(true);
       };
       reader.readAsDataURL(file);
     } else {
@@ -83,14 +110,68 @@ function AddBookDetail({ project, projectIndex, itemIndex }) {
   const goToCreate = async () => {
     // make sure all the variables are set to pass to the next page
     // set pdfPreview - just call saveDraft (todo: add a dirty flag if data has been changed since draft was saved)
-    saveDraft();
-    // set project index [ and item index? ] { projectIndex: projectIndex, itemIndex: itemIndex }
+    await saveDraft();
+    navigate("/book/preview/" + projectIndex + "/" + (itemIndex?itemIndex:newItemID));
     // navigate to PreviewBook
+  };
+
+  function saveDraftAndReturn() {
+    if (saveDraft()) navigate("/project/" + projectIndex);
   }
 
-  const saveDraft = async () => {
-    console.log("saving draft...");
-  
+  const validateForm = () => {
+    // check if it's already saved
+    // todo: check all the form values and return false if any are missing
+    let message = "";
+
+    if (!isModified) {
+      message += "No changes to save. ";
+    }
+    if (!bookName) {
+      message += "Book name is missing. ";
+    }
+    if (!description) {
+      message += "Description is missing. ";
+    }
+    if (!supply) {
+      message += "Supply is missing. ";
+    }
+    if (!pdfData) {
+      message += "PDF data is missing. ";
+    }
+    if (!coverImage) {
+      message += "Cover image is missing. ";
+    }
+    if (allowPreview && !percentagePreview) {
+      message += "Percentage preview is missing. ";
+    }
+
+    if (message) {
+      showToastMessage(message);
+      return false;
+    } else {
+      return true;
+    }
+  };
+
+  async function saveDraft() {
+    if (!validateForm()) return false;
+
+    // this only works if the itemIndex is not set
+    setNewItemID(projects[projectIndex].items.length);
+    const projectItem = await createProjectItem();
+    dispatch({
+      type: "projectItemAdded",
+      id: projects[projectIndex].id,
+      item: projectItem,
+      userUpdateFunction: updateUser,
+    });
+    
+    setIsModified(false);
+    return true;
+  }
+
+  const createProjectItem = async () => {
     const coverImageFile = new File(
       [await fetch(coverImage).then((r) => r.blob())],
       "coverImage"
@@ -107,8 +188,9 @@ function AddBookDetail({ project, projectIndex, itemIndex }) {
     const pdfURI = await uploadToAPI(new File([modifiedPDF], "modifiedPDF"));
 
     // will call util function to post pdf data to backend / fiftywei / save
-    const encryptedPdfURI = encryptPdf(pdfData);
+    const encryptedDocid = await encryptPdf(pdfData);
 
+    // background image is a gradient designed to make it easier to read
     const options = {
       title: bookName,
       image: "/ipfs/" + coverImageURI,
@@ -116,70 +198,73 @@ function AddBookDetail({ project, projectIndex, itemIndex }) {
       purchaseURL: "",
       pdfURL: "/ipfs/" + pdfURI,
       description: description,
-      backgroundImage: "https://via.placeholder.com/150",
+      backgroundImage: "/ipfs/QmY1RQ2AnRaSDMF2cewLbLZrZJEyojTB8C3gpLgVAZ6Buv",
       baseHref: "/ipfs/QmdpqLgSWdfFHExp4c9ARUtPxExxRrsoAT8Ume2RMjmgkQ/",
     };
 
     const html = Buffer.from(generateBookFromTemplate(options), "utf8");
     const htmlURI = await uploadToAPI(html, "index.html");
 
-    const projectItem = {
-      "name": bookName,
-      "description": description,
-      "image": coverImageURI,
-      "pdf": pdfURI,
-      "video": "",
-      "audio": "",
-      "encryptedfile": encryptedPdfURI,
-      "ERC721metadata": {},
-      "interactiveURL": htmlURI,
-      "previewPages": previewPages,
-      "pages": pageCount,
-      "genre": "Genre",
-      "type": "Book",
-      "releases": [
-          {
-              "chainId": 137,
-              "contractAddress": "0x1234567890",
-              "tokenStandard": "ERC721",
-              "tokenId": "1234567890",
-              "date": "dd/mm/yyyy",
-              "price": 0,
-              "currency": "ETH",
-              "royalties": 0
-          }
-      ],
-      "status": "Draft"
-  }
-  
-    console.log("projectItem", projectItem);
-
     const contractMetadata = {
-      name: projectItem.name,
-      symbol: projectItem.name.toUpperCase().substring(0,5),
-      description: projectItem.description,
-      image:
-          projectItem.image,
+      name: bookName,
+      symbol: bookName.toUpperCase().substring(0, 5),
+      description: description,
+      image: "https://ipfs.nftbookbazaar.com/" + coverImageURI,
+      external_link: "https://ipfs.nftbookbazaar.com/" + htmlURI,
+      animation_url: "https://ipfs.nftbookbazaar.com/" + htmlURI,
+      secret_contract: "secret1kzejyxq0kmecx2455crw78uwrqkwref35kd7a6",
+      secret_hash:
+        "0bbc0a2b7312513044f1ebc69e0f7f785963a00d488d160fd01d46acdff7cea6",
+      secret_docid: encryptedDocid,
       seller_fee_basis_points: 1000,
       fee_recipient: user.wallet?.address,
-      };
-    const contractMetadataURI = await uploadToAPI(contractMetadata, "metadata.json");
-    projectItem.contractMetadataURI = contractMetadataURI;
-    
-    if (!project.items) project.items = [];
-    project.items?.push(projectItem);
+    };
+    const contractMetadataURI = await uploadToAPI(
+      contractMetadata,
+      "metadata.json"
+    );
 
-    // load the user metadata and update the project
-    updateUserMetadata(user, project, projectIndex);
+    // definitely figure out this id thing for items!
+    const projectItem = {
+      id: itemIndex,
+      name: bookName,
+      description: description,
+      image: coverImageURI,
+      pdf: pdfURI,
+      video: "",
+      audio: "",
+      encryptedfile: encryptedDocid,
+      contractMetadataURI: contractMetadataURI,
+      interactiveURL: htmlURI,
+      previewPages: previewPages,
+      pages: pageCount,
+      genre: "Genre",
+      type: "Book",
+      releases: [
+        {
+          chainId: 137,
+          contractAddress: "0x1234567890",
+          tokenStandard: "ERC721",
+          tokenId: "1234567890",
+          date: "dd/mm/yyyy",
+          price: 0,
+          currency: "ETH",
+          royalties: 0,
+        },
+      ],
+      status: "Draft",
+    };
 
-    // also navigate to the project page
-    //Navigate(`/project/${projectIndex}`);
+    console.log("projectItem", projectItem);
+
+    return projectItem;
   };
 
+  /*
   const updateUserMetadata = (user, project, projectIndex) => {
     // Get the existing projects from user.metadata, or create an empty array if it doesn't exist
     const existingProjects = projects;
-//      user.metadata && user.metadata.projects ? user.metadata.projects : [];
+    //      user.metadata && user.metadata.projects ? user.metadata.projects : [];
 
     // Add the new project to the existing projects
     existingProjects[projectIndex] = project;
@@ -192,10 +277,11 @@ function AddBookDetail({ project, projectIndex, itemIndex }) {
     };
 
     const handleSave = async (userFields) => {
+      //todo: refactor this to save the profile using dispatch
       const metadataHash = await saveMetadata(userFields.metadata);
 
       const { updateUserProfileResponse } = await updateUser(
-        {metadata: {'hash': metadataHash}},
+        { metadata: { hash: metadataHash } },
         import.meta.env.VITE_APP_DYNAMIC_ENVIRONMENT_ID
       );
 
@@ -209,53 +295,44 @@ function AddBookDetail({ project, projectIndex, itemIndex }) {
 
     handleSave(userFields);
   };
+*/
 
   const handleAllowPreviewChange = (event) => {
-    setAllowPreview(!event.target.checked);
-    console.log("allowPreview", allowPreview);
+    setAllowPreview(event.target.checked);
+    setIsModified(true);
   };
 
   const handleUpdatePreviewAmount = (event) => {
     setPercentagePreview(event.target.value);
+    setIsModified(true);
   };
 
   const handleBookNameChange = (event) => {
     setBookName(event.target.value);
+    setIsModified(true);
   };
 
   const handleDescriptionChange = (event) => {
     setDescription(event.target.value);
+    setIsModified(true);
   };
 
   const handleSupplyChange = (event) => {
     setSupply(event.target.value);
+    setIsModified(true);
   };
 
   const encryptPdf = async function (pdfData) {
     //todo post pdf data via axios to
     try {
+      // result format: { fileid, storeSecretResult, tx }
       const result = await encryptAndStoreItem(pdfData);
       console.log("encryption result:", result);
-      //const encryptedPdfURI = result.encryptedPdfURI, encryptionKey, tx } = 
-      return "encryptedPdfURI";
+
+      return result.fileid;
     } catch (error) {
       console.log("error", error);
     }
-    /*    // Generate local asymmetric keys as "anonymous" user
-    const ECDHKeys = ECDHEncryption.generate();
-
-    //console.log("ECDH Pubkey", ECDHKeys.publicKey);
-
-    const sharedKey = ECDHEncryption.generateSharedKey(
-      secretContractPublicKey,
-      ECDHKeys.privateKey
-    );
-    //console.log("sharedKey", sharedKey);
-
-    const encryptedMessage = await ECDHEncryption.encrypt(pdfData, sharedKey);
-    console.log("encryptedMessage", encryptedMessage);
-    return { encryptedMessage, sharedKey };
-  */
   };
 
   const modifyPdf = async function (pdfData, coverImage, percentagePreview) {
@@ -285,14 +362,32 @@ function AddBookDetail({ project, projectIndex, itemIndex }) {
     } else {
       cover = await pdfDoc.embedJpg(coverImageBytes);
     }
-    const aspectRatio = width / height;
-    const coverWidth = width;
-    const coverHeight = coverWidth / aspectRatio;
+
+    const coverImg = (img, page, pageObject, type) => {
+      const imgRatio = img.height / img.width;
+      const pageRatio = page.width / page.width;
+      if ((imgRatio < pageRatio && type === 'contain') || (imgRatio > pageRatio && type === 'cover')) {
+        const h = page.innerWidth * imgRatio;
+        pageObject.drawImage(img, {x: 0, y:(page.height - h) / 2, width: page.width, height: h});
+      }
+      if ((imgRatio > pageRatio && type === 'contain') || (imgRatio < pageRatio && type === 'cover')) {
+        const w = page.width * pageRatio / imgRatio
+        pageObject.drawImage(img, {x:(page.width - w) / 2, y:0, width:w, height:page.height});
+      }
+    }
+    coverImg(cover, {'width': width, 'height': height}, firstPage, 'cover');
+/*
+    // if width is 3 and height is 4, aspect ratio is 3/4
+    // if coverwidth is 1 and aspect ratio is 3/4, coverheight is 1.333
+    const pageAspectRatio = width / height;
+    const imageAspectRatio = cover.width / cover.height; 
+    const coverWidth = (imageAspectRatio < 1) ? width : height * imageAspectRatio;
+    const coverHeight = (imageAspectRatio > 1) ? height : width / imageAspectRatio;
     firstPage.drawImage(cover, {
       width: coverWidth,
       height: coverHeight,
     });
-
+*/
     // removePages
     for (let i = pages.length; i > previewLength; i--) {
       pdfDoc.removePage(i);
@@ -301,12 +396,13 @@ function AddBookDetail({ project, projectIndex, itemIndex }) {
     previewPage.drawText("Owners can view this work in full at PageDAO.org", {
       x: 5,
       y: height / 2 + 300,
-      size: 24,
+      size: 16,
       font: helveticaFont,
       color: rgb(0.95, 0.1, 0.1),
-      rotate: degrees(-45),
     });
+    
     const pdfBytes = await pdfDoc.save();
+
     return {
       modifiedPDF: pdfBytes,
       pageCount: pages.length,
@@ -362,6 +458,20 @@ function AddBookDetail({ project, projectIndex, itemIndex }) {
       <div className="w-full bg-neutral-100">
         <div className="container mx-auto py-10 flex justify-between gap-4">
           <div className="basis-3/4 flex-row justify-start items-start gap-8 inline-flex w-full">
+            <Toast.Provider>
+              <Toast.Root
+                className="ToastRoot"
+                open={open}
+                onOpenChange={setOpen}
+              >
+                <Toast.Title className="ToastTitle">{toastMessage}</Toast.Title>
+                <Toast.Description asChild></Toast.Description>
+                <Toast.Action className="ToastAction" asChild altText="undo">
+                  <button className="Button small green">Undo</button>
+                </Toast.Action>
+              </Toast.Root>
+              <Toast.Viewport className="ToastViewport" />
+            </Toast.Provider>
             <div className="flex-col justify-start items-start gap-4 inline-flex">
               <div className="text-neutral-800 text-2xl font-bold font-['Arvo'] leading-normal">
                 Cover
@@ -455,6 +565,7 @@ function AddBookDetail({ project, projectIndex, itemIndex }) {
                             type="text"
                             placeholder="Book name"
                             onChange={handleBookNameChange}
+                            value={bookName}
                           />
                         </div>
                       </div>
@@ -475,6 +586,7 @@ function AddBookDetail({ project, projectIndex, itemIndex }) {
                             placeholder="Write a good description"
                             rows="5"
                             onChange={handleDescriptionChange}
+                            value={description}
                           ></textarea>
                         </div>
                       </div>
@@ -499,6 +611,7 @@ function AddBookDetail({ project, projectIndex, itemIndex }) {
                           type="text"
                           placeholder="25"
                           onChange={handleSupplyChange}
+                          default={supply}
                         />
                       </div>
                     </div>
@@ -566,14 +679,14 @@ function AddBookDetail({ project, projectIndex, itemIndex }) {
                 <div className="justify-center items-center gap-1 flex">
                   <button
                     className="px-16 py-3 rounded-lg border border-neutral-800 text-neutral-800 text-base font-bold font-['DM Sans'] leading-snug"
-                    onClick={saveDraft}
+                    onClick={saveDraftAndReturn}
                   >
                     Save draft
                   </button>
                 </div>
                 <div className="grow shrink basis-0 justify-center items-center gap-1 flex">
                   {/* call save and then navigate to preview page */}
-                  <button 
+                  <button
                     className="px-8 py-3 bg-dao-primary rounded-lg text-center text-neutral-50 text-base font-bold font-['DM Sans'] leading-snug w-full"
                     onClick={goToCreate}
                   >
@@ -605,7 +718,7 @@ function AddBookDetail({ project, projectIndex, itemIndex }) {
                       Minting schedule
                     </div>
                     <div className="text-right text-zinc-400 text-xl font-medium font-['DM Sans'] leading-7">
-                      Coming soon
+                      Immediate
                     </div>
                   </div>
                   <div className="self-stretch pb-2 border-b border-neutral-500 flex-col justify-start items-start gap-2 flex">
@@ -621,7 +734,7 @@ function AddBookDetail({ project, projectIndex, itemIndex }) {
                       Claim
                     </div>
                     <div className="text-right text-zinc-400 text-xl font-medium font-['DM Sans'] leading-7">
-                      Coming soon
+                      Claim Price 0.001 ETH
                     </div>
                   </div>
                   <div className="self-stretch pb-2 border-b border-neutral-500 flex-col justify-start items-start gap-2 flex">
@@ -637,7 +750,7 @@ function AddBookDetail({ project, projectIndex, itemIndex }) {
                       Mint on demand
                     </div>
                     <div className="text-right text-zinc-400 text-xl font-medium font-['DM Sans'] leading-7">
-                      Coming soon
+                      Activated
                     </div>
                   </div>
                   <div className="p-4 bg-amber-100 rounded-lg justify-center items-center gap-2 inline-flex">

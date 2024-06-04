@@ -71,6 +71,10 @@ export function TasksProvider({ children }) {
 }
 
 function tasksReducer(tasks, action) {
+  const saveIfNecessary = (userUpdateFunction, newTasks) => {
+    if (userUpdateFunction)
+      saveMetadata(newTasks).then((value)=>{userUpdateFunction(value, import.meta.env.VITE_APP_DYNAMIC_ENVIRONMENT_ID)});
+  };
   switch (action.type) {
     case "initialized": {
       return action.tasks && action.tasks.length>0 ? [...action.tasks] : [];
@@ -87,21 +91,39 @@ function tasksReducer(tasks, action) {
               done: false,
             },
           ];
-      if (action.userUpdateFunction)
-        saveMetadata(newTasks).then((value)=>{action.userUpdateFunction(value, import.meta.env.VITE_APP_DYNAMIC_ENVIRONMENT_ID)});
+      saveIfNecessary(action.userUpdateFunction, newTasks);
       return newTasks;
     }
     case "changed": {
-      return tasks.map((t) => {
+      const newTasks = tasks.map((t) => {
         if (t.id === action.task.id) {
           return action.task;
         } else {
           return t;
         }
       });
+      saveIfNecessary(action.userUpdateFunction, newTasks);
+      return newTasks;
     }
     case "deleted": {
-      return tasks.filter((t) => t.id !== action.id);
+      const newTasks = tasks.filter((t) => t.id !== action.id);
+      saveIfNecessary(action.userUpdateFunction, newTasks);
+      return newTasks;
+    }
+    case "projectItemAdded": {
+      console.log("projectItemAdded called:", action);
+      const newTasks = tasks.map((t) => {
+        if (t.id === action.id) {
+          return {
+            ...t,
+            items: [...t.items, action.item],
+          };
+        } else {
+          return t;
+        }
+      });
+      saveIfNecessary(action.userUpdateFunction, newTasks);
+      return newTasks;
     }
     default: {
       console.log(action.type, action); //throw Error('Unknown action: ' + action.type);

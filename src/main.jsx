@@ -37,6 +37,7 @@ import {} from "viem/accounts";
 import axios from "axios";
 import { TasksProvider } from "./template/Providers/TasksContext";
 
+// todo: refactor this into some kind of API context (or add to TasksContext)
 const marketplaceFee = "5"; // 5% fee on marketplace sales to polygon minter proceeds wallet - should be queried from osmosis daodao api
 const platformFee = "5"; // 5% fee on primary sales to polygon minter proceeds wallet - should be queried from osmosis daodao api
 

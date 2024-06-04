@@ -1,12 +1,13 @@
 import React from "react";
 import { Book, MoreHorizontal } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import '../../assets/styles.css';
 
 
 function CollapsableItemSection({
   index,
+  id,
   title,
   item,
   emptyContent,
@@ -16,12 +17,13 @@ function CollapsableItemSection({
   onActionButtonClick,
   dropdownMenuActions,
 }) {
+  const navigate = useNavigate();
   return (
     <>
       <div className="flex-row justify-between items-center gap-2 flex">
         <Link
           to={{
-            pathname: `/book/edit/${index}`,
+            pathname: item.items.length>0?`/project/${index}`:`/book/edit/${index}`,
           }}
           className=""
         >
@@ -41,7 +43,7 @@ function CollapsableItemSection({
         </Link>
         <div className="justify-end items-center gap-4 flex">
           <div className="text-neutral-500 text-base font-normal font-['DM Sans'] leading-snug">
-            0 collections / 0 books {index}
+            0 collections / 0 books {id}
           </div>
 
           {/* todo: create a dropdown menu displaying delete project option*/}
@@ -51,10 +53,10 @@ function CollapsableItemSection({
             </DropdownMenu.Trigger>
           <DropdownMenu.Portal>
             <DropdownMenu.Content className="DropdownMenuContent" sideOffset={5}>
-              <DropdownMenu.Item className="DropdownMenuItem" onClick={()=>dropdownMenuActions.delete(index)}>
+              <DropdownMenu.Item className="DropdownMenuItem" onClick={()=>dropdownMenuActions.delete(id)}>
                 Delete <div className="RightSlot">(permanently)</div>
               </DropdownMenu.Item>
-              <DropdownMenu.Item className="DropdownMenuItem">
+              <DropdownMenu.Item className="DropdownMenuItem" onClick={()=>navigate(`/project/${index}`)}>
                 Edit
               </DropdownMenu.Item>
               <DropdownMenu.Item className="DropdownMenuItem" disabled>

@@ -47,11 +47,12 @@ function CollapsableSection({
                 </button>
               </div>
               <div className="w-full p-10 bg-white rounded-lg gap-4 flex flex-col">
-                {tasks.map((task) => (
+                {tasks.map((task, index) => (
                 
                   <CollapsableItemSection
                     key={task.id}
-                    index={task.id}
+                    index={index}
+                    id={task.id}
                     title={task.text}
                     item={task}
                     emptyContent={emptyContent}

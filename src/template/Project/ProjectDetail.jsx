@@ -1,4 +1,4 @@
-import React from "react";
+import { useContext } from "react";
 import ProjectItem from "./ProjectItem.jsx";
 import {
   ArrowDownAZ,
@@ -8,9 +8,11 @@ import {
   Search,
 } from "lucide-react";
 import ProjectStats from "./ProjectStats.jsx";
+import { TasksContext } from "../Providers/TasksContext.js";
 
-function ProjectDetail({ projectIndex, project }) {
+function ProjectDetail({ projectIndex }) {
   let show = true;
+  const project = useContext(TasksContext)[projectIndex];
 
   return (
     <>
