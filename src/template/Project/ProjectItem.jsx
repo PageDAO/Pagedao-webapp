@@ -2,17 +2,15 @@ import {PlusCircle} from "lucide-react";
 import {Link} from "react-router-dom";
 
 function ProjectItem({project, projectIndex, item, itemIndex}) {
-
-    console.log("ProjectItem", item);
     return (
         <>
             {project ? (
                 <div className="pb-6 flex-col justify-start items-start gap-4 inline-flex">
-                    <Link to={`/book/edit/${itemIndex}`}>
+                    <Link to={`/book/edit/${projectIndex}/${itemIndex}`}>
                     <div className="relative bg-neutral-50 rounded-lg">
                         <img
                             className="h-[347px]"
-                            src={item.image || "https://via.placeholder.com/150"}
+                            src={`https://ipfs.nftbookbazaar.com/ipfs/${item.image}` || "https://via.placeholder.com/150"}
                             alt="Cover"
                         />                        <div
                             className="px-2 py-1 left-[16px] top-[16px] absolute bg-amber-200 rounded-lg justify-center items-center gap-2 inline-flex">

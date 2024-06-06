@@ -23,11 +23,23 @@ import { DynamicWagmiConnector } from "@dynamic-labs/wagmi-connector";
 import { createConfig, WagmiProvider } from "wagmi";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { http } from "viem";
-import { mainnet, polygon, base, optimism, moonbeam, evmos, zora } from "viem/chains";
+import {
+  mainnet,
+  polygon,
+  base,
+  optimism,
+  moonbeam,
+  evmos,
+  zora,
+} from "viem/chains";
 import { MetaMaskWallet } from "secretjs";
-import { metaMask } from "wagmi/connectors";
 import {} from "viem/accounts";
+import axios from "axios";
+import { TasksProvider } from "./template/Providers/TasksContext";
 
+// todo: refactor this into some kind of API context (or add to TasksContext)
+const marketplaceFee = "5"; // 5% fee on marketplace sales to polygon minter proceeds wallet - should be queried from osmosis daodao api
+const platformFee = "5"; // 5% fee on primary sales to polygon minter proceeds wallet - should be queried from osmosis daodao api
 
 const evmNetworks = [
   {
@@ -156,7 +168,17 @@ const evmNetworks = [
 const degenChain = evmNetworks[5];
 
 const config = createConfig({
-  chains: [mainnet, polygon, moonbeam, optimism, base, evmos, degenChain, zora, evmos],
+  chains: [
+    mainnet,
+    polygon,
+    moonbeam,
+    optimism,
+    base,
+    evmos,
+    degenChain,
+    zora,
+    evmos,
+  ],
   multiInjectedProviderDiscovery: false,
   transports: {
     [mainnet.id]: http(),
@@ -166,7 +188,8 @@ const config = createConfig({
 const queryClient = new QueryClient();
 
 const reservoirPolygon = reservoirChains.polygon;
-reservoirPolygon.chainIcon = "https://app.dynamic.xyz/assets/networks/polygon.svg";
+reservoirPolygon.chainIcon =
+  "https://app.dynamic.xyz/assets/networks/polygon.svg";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
@@ -185,18 +208,59 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         evmNetworks,
         appLogoUrl: walletLogo,
         events: {
-          onAuthSuccess: (args) => {
-            console.log('onAuthSuccess was called', args);
-            const ethAddress = args.primaryWallet.address;
-            // set up the user's secretjs metamask wallet if I can
-            args.primaryWallet.getPubKey().then((pubkey) => {
-              console.log('pubkey', pubkey);
-              localStorage.setItem(`secretjs_${ethAddress}_pubkey`, pubkey);
-              const secretjsWallet = new MetaMaskWallet.create(args.primaryWallet.connector.getWalletClient().getPubKey(), ethAddress);
-              console.log('secretjsWallet', secretjsWallet);
-            });
-          }
-        }
+          onAuthSuccess: async (args) => {
+            console.log("onAuthSuccess was called", args);
+            // set up the user's secretjs metamask wallet if it doesn't exist on the userAdditionalAddresses
+            const additionalAddresses =
+              await args.primaryWallet.connector.getAdditionalAddresses(
+                args.primaryWallet.address
+              );
+            console.log("additional addresses:", additionalAddresses);
+            if (
+              additionalAddresses.length > 0 &&
+              additionalAddresses[0].substring(5) == "secret"
+            )
+              return;
+
+            // get new generated public key from api
+            const axiosconfig = {
+              headers: { "Content-Type": "application/json" },
+            };
+            axios
+              .post(
+                `${import.meta.env.VITE_APP_BACKEND_API_URL}/auth`,
+                {
+                  data: { userid: args.user.userId },
+                },
+                axiosconfig
+              )
+              .then((response) => {
+                console.log(response);
+                const ethAddress = response.data.address;
+                const pubKey = response.data.publicKey.substring(2);
+
+                localStorage.setItem(`secretjs_${ethAddress}_pubkey`, pubKey);
+                MetaMaskWallet.create(null, ethAddress).then(
+                  (secretjsWallet) => {
+                    // let's add this to the user's wallet collection (and above, check if it exists)
+                    args.primaryWallet.connector
+                      .setAdditionalAddresses(args.primaryWallet.address, [
+                        secretjsWallet.address,
+                      ])
+                      .then((result) => {
+                        console.log(secretjsWallet, result);
+                      })
+                      .catch((error) => {
+                        console.log(error);
+                      });
+                  }
+                );
+              })
+              .catch((error) => {
+                console.log(error);
+              });
+          },
+        },
       }}
     >
       <WagmiProvider config={config}>
@@ -204,7 +268,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           <DynamicWagmiConnector suppressChainMismatchError>
             <ReservoirKitProvider
               options={{
-                apiKey: "b56cc2f7-5b63-5725-bbcc-6555c57c85f6",
+                apiKey: import.meta.env.VITE_APP_RESERVOIR_API_KEY,
                 chains: [
                   {
                     chainId: 137,
@@ -216,12 +280,17 @@ ReactDOM.createRoot(document.getElementById("root")).render(
                 disablePoweredByReservoir: false,
                 preferDisplayFiatTotal: true,
                 marketplaceFees: [
-                  "0xF6D587f6091FD06157C661ea20D8139D7A89C46D:5",
-                ], // 5% fee to polygon minter wallet
+                  `${import.meta.env.VITE_APP_POLYGON_FEE_ADDRESS}:${marketplaceFee}`,
+                ], // 5% fee to polygon minter wallet - should be queried from osmosis daodao api
               }}
               theme={lightTheme}
             >
-              <App />
+              <TasksProvider options={{
+                'platformFee': platformFee,
+                'marketplaceFee': marketplaceFee
+              }}>
+                <App />
+              </TasksProvider>
             </ReservoirKitProvider>
           </DynamicWagmiConnector>
         </QueryClientProvider>

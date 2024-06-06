@@ -15,7 +15,6 @@ import EditAuthorInfo from './template/AuthorProfile/EditAuthorInfo.jsx';
 
 function App() {
     const isLoggedIn = useIsLoggedIn();
-    //const {user} = useDynamicContext();
 
     const router = createBrowserRouter([
         {
@@ -44,6 +43,10 @@ function App() {
         },
         {
             path: "/book/edit/:projectIndex",
+            element: isLoggedIn ? <AddBook/> : <Login/>,
+        },
+        {
+            path: "/book/edit/:projectIndex/:itemIndex",
             element: isLoggedIn ? <AddBook/> : <Login/>,
         },
         {

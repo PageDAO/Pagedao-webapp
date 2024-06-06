@@ -1,7 +1,8 @@
-import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
+import { useContext } from "react";
+import {TasksContext} from "../Providers/TasksContext";
+
 function SideBar() {
-    const { user } = useDynamicContext();
-    const projects = user?.metadata?.projects;
+    const tasks = useContext(TasksContext);
     return (
         <>
             <div
@@ -20,7 +21,7 @@ function SideBar() {
                             </div>
                             <div
                                 className="text-right text-neutral-800 text-xl font-bold font-['DM Sans'] leading-7">
-                                {projects?.length}
+                                {tasks.length}
                             </div>
                         </div>
                         <div
