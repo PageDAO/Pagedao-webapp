@@ -205,7 +205,7 @@ function AddBookDetail({ projectIndex, itemIndex }) {
     const html = Buffer.from(generateBookFromTemplate(options), "utf8");
     const htmlURI = await uploadToAPI(html, "index.html");
 
-    const contractMetadata = {
+    const itemMetadata = {
       name: bookName,
       symbol: bookName.toUpperCase().substring(0, 5),
       description: description,
@@ -219,8 +219,8 @@ function AddBookDetail({ projectIndex, itemIndex }) {
       seller_fee_basis_points: 1000,
       fee_recipient: user.wallet?.address,
     };
-    const contractMetadataURI = await uploadToAPI(
-      contractMetadata,
+    const itemMetadataURI = await uploadToAPI(
+      itemMetadata,
       "metadata.json"
     );
 
@@ -234,13 +234,15 @@ function AddBookDetail({ projectIndex, itemIndex }) {
       video: "",
       audio: "",
       encryptedfile: encryptedDocid,
-      contractMetadataURI: contractMetadataURI,
+      itemMetadataURI: itemMetadataURI,
       interactiveURL: htmlURI,
       previewPages: previewPages,
       pages: pageCount,
       genre: "Genre",
       type: "Book",
-      releases: [
+      dateCreated: new Date().toISOString(),
+      dateModified: new Date().toISOString(),
+      contracts: [
         {
           chainId: 137,
           contractAddress: "0x1234567890",

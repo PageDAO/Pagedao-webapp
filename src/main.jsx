@@ -36,6 +36,7 @@ import { MetaMaskWallet } from "secretjs";
 import {} from "viem/accounts";
 import axios from "axios";
 import { TasksProvider } from "./template/Providers/TasksContext";
+import { ThirdwebProvider } from "thirdweb/react";
 
 // todo: refactor this into some kind of API context (or add to TasksContext)
 const marketplaceFee = "5"; // 5% fee on marketplace sales to polygon minter proceeds wallet - should be queried from osmosis daodao api
@@ -182,6 +183,14 @@ const config = createConfig({
   multiInjectedProviderDiscovery: false,
   transports: {
     [mainnet.id]: http(),
+    [polygon.id]: http(),
+    [moonbeam.id]: http(),
+    [optimism.id]: http(),
+    [base.id]: http(),
+    [evmos.id]: http(),
+    [degenChain.id]: http(),
+    [zora.id]: http(),
+    [evmos.id]: http(),
   },
 });
 
@@ -266,6 +275,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
       <WagmiProvider config={config}>
         <QueryClientProvider client={queryClient}>
           <DynamicWagmiConnector suppressChainMismatchError>
+            <ThirdwebProvider clientId={'f249a59bdff8d2da0eb19725b90c6904'} autoConnect={true}> 
             <ReservoirKitProvider
               options={{
                 apiKey: import.meta.env.VITE_APP_RESERVOIR_API_KEY,
@@ -292,6 +302,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
                 <App />
               </TasksProvider>
             </ReservoirKitProvider>
+            </ThirdwebProvider>
           </DynamicWagmiConnector>
         </QueryClientProvider>
       </WagmiProvider>
