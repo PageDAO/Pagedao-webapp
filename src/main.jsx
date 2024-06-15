@@ -183,7 +183,7 @@ const config = createConfig({
   multiInjectedProviderDiscovery: false,
   transports: {
     [mainnet.id]: http(),
-    [polygon.id]: http(),
+    [polygon.id]: http("https://polygon-mainnet.g.alchemy.com/v2/f5LpbJ2eyEurydCMDameDYSJmLa8pPyS"),
     [moonbeam.id]: http(),
     [optimism.id]: http(),
     [base.id]: http(),

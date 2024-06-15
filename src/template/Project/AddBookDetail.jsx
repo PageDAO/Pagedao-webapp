@@ -32,12 +32,12 @@ function AddBookDetail({ projectIndex, itemIndex }) {
   const [description, setDescription] = useState("");
   const [supply, setSupply] = useState(1000);
   const [pdfData, setPdfData] = useState(null);
-  const [pdfPreview, setPdfPreview] = useState(null);
+  const [filename, setFilename] = useState("");
   const [open, setOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const timerRef = useRef(0);
   const dispatch = useContext(TasksDispatchContext);
-  const [newItemID, setNewItemID] = useState(0);
+  const [newItemID, setNewItemID] = useState();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -48,9 +48,18 @@ function AddBookDetail({ projectIndex, itemIndex }) {
           projects[projectIndex].items[itemIndex].image
       );
       setBookName(projects[projectIndex].items[itemIndex].name);
-      //todo: save percentage ???    setPercentagePreview(projects[projectIndex].items[itemIndex].previewPages);
+      // todo: set filename to let a person know it's saved and present (and they don't need to upload again)
+      setFilename(projects[projectIndex].items[itemIndex].filename);
+      setPercentagePreview(
+        Math.round(
+          (projects[projectIndex].items[itemIndex].previewPages /
+            projects[projectIndex].items[itemIndex].pages) *
+            100
+        )
+      );
       setDescription(projects[projectIndex].items[itemIndex].description);
       setSupply(projects[projectIndex].items[itemIndex].supply);
+      setNewItemID(itemIndex);
     }
   }, [projects, projectIndex, itemIndex]);
 
@@ -88,6 +97,7 @@ function AddBookDetail({ projectIndex, itemIndex }) {
     if (file && file.type === "application/pdf") {
       const reader = new FileReader();
       reader.onloadend = () => {
+        setFilename(file.name);
         setPdfData(reader.result);
         setIsModified(true);
       };
@@ -108,10 +118,15 @@ function AddBookDetail({ projectIndex, itemIndex }) {
   };
 
   const goToCreate = async () => {
-    // make sure all the variables are set to pass to the next page
+    // todo: check the itemindex
     // set pdfPreview - just call saveDraft (todo: add a dirty flag if data has been changed since draft was saved)
     await saveDraft();
-    navigate("/book/preview/" + projectIndex + "/" + (itemIndex?itemIndex:newItemID));
+    navigate(
+      "/book/preview/" +
+        projectIndex +
+        "/" +
+        (itemIndex ? itemIndex : newItemID)
+    );
     // navigate to PreviewBook
   };
 
@@ -166,7 +181,7 @@ function AddBookDetail({ projectIndex, itemIndex }) {
       item: projectItem,
       userUpdateFunction: updateUser,
     });
-    
+
     setIsModified(false);
     return true;
   }
@@ -180,6 +195,8 @@ function AddBookDetail({ projectIndex, itemIndex }) {
       new File([coverImageFile], coverImageFile.name)
     );
 
+    // todo: do detection on filetype and add character 
+
     const { modifiedPDF, pageCount, previewPages } = await modifyPdf(
       pdfData,
       coverImage,
@@ -187,7 +204,6 @@ function AddBookDetail({ projectIndex, itemIndex }) {
     );
     const pdfURI = await uploadToAPI(new File([modifiedPDF], "modifiedPDF"));
 
-    // will call util function to post pdf data to backend / fiftywei / save
     const encryptedDocid = await encryptPdf(pdfData);
 
     // background image is a gradient designed to make it easier to read
@@ -207,7 +223,6 @@ function AddBookDetail({ projectIndex, itemIndex }) {
 
     const itemMetadata = {
       name: bookName,
-      symbol: bookName.toUpperCase().substring(0, 5),
       description: description,
       image: "https://ipfs.nftbookbazaar.com/" + coverImageURI,
       external_link: "https://ipfs.nftbookbazaar.com/" + htmlURI,
@@ -219,20 +234,28 @@ function AddBookDetail({ projectIndex, itemIndex }) {
       seller_fee_basis_points: 1000,
       fee_recipient: user.wallet?.address,
     };
-    const itemMetadataURI = await uploadToAPI(
-      itemMetadata,
-      "metadata.json"
-    );
+    const itemMetadataURI = await uploadToAPI(JSON.stringify(itemMetadata), "metadata.json");
+
+    const contractMetadata = {
+      name: "PageDAO project: " + projects[projectIndex].name,
+      symbol: bookName.toUpperCase().substring(0, 5),
+      image: "https://ipfs.nftbookbazaar.com/ipfs/" + coverImageURI,
+      seller_fee_basis_points: 1000,
+      fee_recipient: user.wallet?.address,
+    };
+
+    const contractMetadataURI = await uploadToAPI(JSON.stringify(contractMetadata), "contract.json");
 
     // definitely figure out this id thing for items!
     const projectItem = {
-      id: itemIndex,
+      id: newItemID,
       name: bookName,
       description: description,
       image: coverImageURI,
       pdf: pdfURI,
       video: "",
       audio: "",
+      filename: filename,
       encryptedfile: encryptedDocid,
       itemMetadataURI: itemMetadataURI,
       interactiveURL: htmlURI,
@@ -242,16 +265,15 @@ function AddBookDetail({ projectIndex, itemIndex }) {
       type: "Book",
       dateCreated: new Date().toISOString(),
       dateModified: new Date().toISOString(),
+      supply: supply,
       contracts: [
         {
           chainId: 137,
-          contractAddress: "0x1234567890",
+          contractMetadataHash: contractMetadataURI,
+          contractAddress: "",
           tokenStandard: "ERC721",
-          tokenId: "1234567890",
-          date: "dd/mm/yyyy",
+          deployed: false,
           price: 0,
-          currency: "ETH",
-          royalties: 0,
         },
       ],
       status: "Draft",
@@ -261,43 +283,6 @@ function AddBookDetail({ projectIndex, itemIndex }) {
 
     return projectItem;
   };
-
-  /*
-  const updateUserMetadata = (user, project, projectIndex) => {
-    // Get the existing projects from user.metadata, or create an empty array if it doesn't exist
-    const existingProjects = projects;
-    //      user.metadata && user.metadata.projects ? user.metadata.projects : [];
-
-    // Add the new project to the existing projects
-    existingProjects[projectIndex] = project;
-
-    // Create the userFields object
-    const userFields = {
-      metadata: {
-        projects: existingProjects,
-      },
-    };
-
-    const handleSave = async (userFields) => {
-      //todo: refactor this to save the profile using dispatch
-      const metadataHash = await saveMetadata(userFields.metadata);
-
-      const { updateUserProfileResponse } = await updateUser(
-        { metadata: { hash: metadataHash } },
-        import.meta.env.VITE_APP_DYNAMIC_ENVIRONMENT_ID
-      );
-
-      // Handle successful update without email verification, e.g., show a success message or redirect
-      console.log(
-        "attempted to save profile",
-        userFields,
-        updateUserProfileResponse
-      );
-    };
-
-    handleSave(userFields);
-  };
-*/
 
   const handleAllowPreviewChange = (event) => {
     setAllowPreview(event.target.checked);
@@ -354,8 +339,6 @@ function AddBookDetail({ projectIndex, itemIndex }) {
     const { width, height } = pages[0].getSize();
     console.log("width", width, "height", height);
 
-    const firstPage = pdfDoc.insertPage(0, [width, height]);
-
     var cover;
 
     //embed the image
@@ -368,33 +351,48 @@ function AddBookDetail({ projectIndex, itemIndex }) {
     const coverImg = (img, page, pageObject, type) => {
       const imgRatio = img.height / img.width;
       const pageRatio = page.width / page.width;
-      if ((imgRatio < pageRatio && type === 'contain') || (imgRatio > pageRatio && type === 'cover')) {
-        const h = page.innerWidth * imgRatio;
-        pageObject.drawImage(img, {x: 0, y:(page.height - h) / 2, width: page.width, height: h});
+      if (
+        (imgRatio < pageRatio && type === "contain") ||
+        (imgRatio > pageRatio && type === "cover")
+      ) {
+        const h = page.width * imgRatio;
+        pageObject.drawImage(img, {
+          x: 0,
+          y: (page.height - h) / 2,
+          width: page.width,
+          height: h,
+        });
       }
-      if ((imgRatio > pageRatio && type === 'contain') || (imgRatio < pageRatio && type === 'cover')) {
-        const w = page.width * pageRatio / imgRatio
-        pageObject.drawImage(img, {x:(page.width - w) / 2, y:0, width:w, height:page.height});
+      if (
+        (imgRatio > pageRatio && type === "contain") ||
+        (imgRatio < pageRatio && type === "cover")
+      ) {
+        const w = (page.width * pageRatio) / imgRatio;
+        pageObject.drawImage(img, {
+          x: (page.width - w) / 2,
+          y: 0,
+          width: w,
+          height: page.height,
+        });
       }
-    }
-    coverImg(cover, {'width': width, 'height': height}, firstPage, 'cover');
-/*
-    // if width is 3 and height is 4, aspect ratio is 3/4
-    // if coverwidth is 1 and aspect ratio is 3/4, coverheight is 1.333
-    const pageAspectRatio = width / height;
-    const imageAspectRatio = cover.width / cover.height; 
-    const coverWidth = (imageAspectRatio < 1) ? width : height * imageAspectRatio;
-    const coverHeight = (imageAspectRatio > 1) ? height : width / imageAspectRatio;
-    firstPage.drawImage(cover, {
-      width: coverWidth,
-      height: coverHeight,
-    });
-*/
+    };
+    coverImg(
+      cover,
+      { width: width, height: height },
+      pdfDoc.insertPage(0, [width, height]),
+      "cover"
+    );
+
     // removePages
     for (let i = pages.length; i > previewLength; i--) {
       pdfDoc.removePage(i);
     }
-    const previewPage = pdfDoc.addPage([width, height]);
+
+    const addPreviewDetailPage = (pdfDoc) => {
+      return pdfDoc.addPage([width, height]);
+    };
+    const previewPage = addPreviewDetailPage(pdfDoc);
+
     previewPage.drawText("Owners can view this work in full at PageDAO.org", {
       x: 5,
       y: height / 2 + 300,
@@ -402,7 +400,7 @@ function AddBookDetail({ projectIndex, itemIndex }) {
       font: helveticaFont,
       color: rgb(0.95, 0.1, 0.1),
     });
-    
+
     const pdfBytes = await pdfDoc.save();
 
     return {
@@ -542,6 +540,7 @@ function AddBookDetail({ projectIndex, itemIndex }) {
                                                         "
                             accept=".pdf"
                             onChange={handlePdfUpload}
+                            placeholder={filename}
                           />
                         </div>
                       </div>
@@ -613,7 +612,7 @@ function AddBookDetail({ projectIndex, itemIndex }) {
                           type="text"
                           placeholder="25"
                           onChange={handleSupplyChange}
-                          default={supply}
+                          value={supply}
                         />
                       </div>
                     </div>
@@ -642,9 +641,9 @@ function AddBookDetail({ projectIndex, itemIndex }) {
                         <input
                           id="allow_preview"
                           onChange={handleAllowPreviewChange}
-                          defaultChecked={allowPreview}
                           type="checkbox"
                           className="bigCheckBox"
+                          checked={allowPreview || percentagePreview > 0}
                         />
                       </label>
                     </div>
@@ -665,6 +664,7 @@ function AddBookDetail({ projectIndex, itemIndex }) {
                             className="bg-transparent block w-full py-1.5 pl-0 pr-20 text-black border-0 text-base font-normal font-['DM Sans'] leading-snug placeholder:text-gray-400 focus:outline-none "
                             placeholder="10"
                             onChange={handleUpdatePreviewAmount}
+                            value={percentagePreview}
                           />
                           <div className="absolute inset-y-0 right-0 flex items-center">
                             <span className="text-gray-500 sm:text-sm bg-transparent py-0 pl-2 pr-4">

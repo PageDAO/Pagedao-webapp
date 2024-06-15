@@ -8,7 +8,6 @@ function Publishing() {
 
     return (
         <>
-            <TopNav/>
             <div className="px-52 py-10 bg-dao-primary w-full">
                 <div className="container mx-auto justify-center gap-20 flex-col ">
                     <h1
@@ -37,7 +36,6 @@ function Publishing() {
                     </div>
                 </div>
             </div>
-            <Footer/>
         </>
     )
 }

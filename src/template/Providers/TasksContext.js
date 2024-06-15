@@ -7,9 +7,13 @@ export const TasksContext = createContext(null);
 export const TasksDispatchContext = createContext(null);
 
 export async function saveMetadata(tasks) {
-  const file = new File([JSON.stringify({'tasks':tasks})], "userMetadata.json", {
-    type: "application/json",
-  });
+  const file = new File(
+    [JSON.stringify({ tasks: tasks })],
+    "userMetadata.json",
+    {
+      type: "application/json",
+    }
+  );
   const metadataHash = await pinToIPFS(
     file,
     "userMetadata.json",
@@ -73,24 +77,29 @@ export function TasksProvider({ children }) {
 function tasksReducer(tasks, action) {
   const saveIfNecessary = (userUpdateFunction, newTasks) => {
     if (userUpdateFunction)
-      saveMetadata(newTasks).then((value)=>{userUpdateFunction(value, import.meta.env.VITE_APP_DYNAMIC_ENVIRONMENT_ID)});
+      saveMetadata(newTasks).then((value) => {
+        userUpdateFunction(
+          value,
+          import.meta.env.VITE_APP_DYNAMIC_ENVIRONMENT_ID
+        );
+      });
   };
   switch (action.type) {
     case "initialized": {
-      return action.tasks && action.tasks.length>0 ? [...action.tasks] : [];
+      return action.tasks && action.tasks.length > 0 ? structuredClone(action.tasks) : [];
     }
     case "added": {
-        const newTasks = [
-            ...tasks,
-            {
-              id: action.id,
-              text: action.text,
-              title: action.title,
-              description: action.description,
-              items: action.items,
-              done: false,
-            },
-          ];
+      const newTasks = [
+        ...tasks,
+        {
+          id: action.id,
+          text: action.text,
+          title: action.title,
+          description: action.description,
+          items: action.items,
+          done: false,
+        },
+      ];
       saveIfNecessary(action.userUpdateFunction, newTasks);
       return newTasks;
     }
@@ -125,6 +134,26 @@ function tasksReducer(tasks, action) {
       saveIfNecessary(action.userUpdateFunction, newTasks);
       return newTasks;
     }
+    case "projectItemChanged": {
+      const newTasks = tasks.map((t) => {
+        if (t.id === action.id) {
+          return {
+            ...t,
+            items: t.items.map((i) => {
+              if (i.id === action.item.id) {
+                return action.item;
+              } else {
+                return i;
+              }
+            }),
+          };
+        } else {
+          return t;
+        }
+      });
+      saveIfNecessary(action.userUpdateFunction, newTasks);
+      return newTasks;
+    }
     default: {
       console.log(action.type, action); //throw Error('Unknown action: ' + action.type);
     }
@@ -132,31 +161,3 @@ function tasksReducer(tasks, action) {
 }
 
 const initialTasks = [];
-/*
-const noninitialTasks = [
-  {
-    id: 0,
-    text: "Philosopher’s Path",
-    title: "Philosopher’s Path --",
-    description: "the only way is up",
-    items: [{ name: "pre-drop", description: "best philosopher pre-drop" }],
-    done: true,
-  },
-  {
-    id: 1,
-    text: "Visit the temple",
-    title: "Visit the temple --",
-    description: "travel is fun",
-    items: [],
-    done: false,
-  },
-  {
-    id: 2,
-    text: "Drink matcha",
-    title: "Drink matcha --",
-    description: "kava matcha watcha go",
-    items: [],
-    done: false,
-  },
-];
-*/

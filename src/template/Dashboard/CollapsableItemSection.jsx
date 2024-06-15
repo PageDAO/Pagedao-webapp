@@ -43,7 +43,7 @@ function CollapsableItemSection({
         </Link>
         <div className="justify-end items-center gap-4 flex">
           <div className="text-neutral-500 text-base font-normal font-['DM Sans'] leading-snug">
-            0 collections / 0 books {id}
+            {item.items.length} items
           </div>
 
           {/* todo: create a dropdown menu displaying delete project option*/}

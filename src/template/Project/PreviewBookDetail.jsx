@@ -1,22 +1,18 @@
 import { Link } from "react-router-dom";
-import {
-  useDynamicContext,
-} from "@dynamic-labs/sdk-react-core";
-import {
-  useWriteContract,
-  useAccount,
-} from "wagmi";
-import {
-  parseAbi,
-  encodeFunctionData,
-} from "viem";
+import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
+import { useWriteContract, useAccount } from "wagmi";
+import { parseAbi, encodeFunctionData } from "viem";
 import { useEffect, useState, useContext } from "react";
+import axios from "axios";
 
 import { TasksContext, TasksDispatchContext } from "../Providers/TasksContext";
+import { setClaimConditions } from "thirdweb/extensions/erc721";
+import { createThirdwebClient, getContract } from "thirdweb";
 
 const USDCPolygonAddress = "0xD4F1ff97298F6793839Fae27E759DA45ace057C3";
 
 const createClaimParams = (
+  contract,
   startTimeStamp,
   maxClaimableSupply,
   supplyClaimed,
@@ -27,8 +23,33 @@ const createClaimParams = (
   metadataURI,
   resetClaimEligibility
 ) => {
+  console.log(startTimeStamp);
+  console.log(maxClaimableSupply);
+  console.log(supplyClaimed);
+  console.log(quantityLimitPerWallet);
+  console.log(merkletree);
+  console.log(pricePerToken);
+  console.log(currency);
+  console.log(metadataURI);
+  console.log(resetClaimEligibility);
+
+  const tx = setClaimConditions({
+    contract,
+    phases: [
+      {
+        maxClaimableSupply: 100n,
+        maxClaimablePerWallet: 1n,
+        currencyAddress: "0x...",
+        price: 0.1,
+        startTime: new Date(),
+      },
+    ],
+  });
+
+  return tx;
+  /*
   return encodeFunctionData({
-    abi: {
+    abi: [{
       inputs: [
         {
           components: [
@@ -75,7 +96,8 @@ const createClaimParams = (
       outputs: [],
       stateMutability: "nonpayable",
       type: "function",
-    },
+    }],
+    functionName: "setClaimConditions",
     args: [
       [
         startTimeStamp,
@@ -90,48 +112,60 @@ const createClaimParams = (
       resetClaimEligibility,
     ],
   });
+  */
 };
 
 const createMerkleTree = (address) => {
   console.log("null merkle tree:", address);
   return [];
 };
+const lazyMintAbi = [
+  {
+    type: "function",
+    name: "lazyMint",
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "_amount",
+        type: "uint256",
+      },
+      {
+        internalType: "string",
+        name: "_baseURIForTokens",
+        type: "string",
+      },
+      {
+        internalType: "bytes",
+        name: "_data",
+        type: "bytes",
+      },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+];
 
 const createLazyMintParams = (amount, baseURIForTokens, data) => {
   return encodeFunctionData({
-    abi: {
-      inputs: [
-        {
-          internalType: "uint256",
-          name: "_amount",
-          type: "uint256",
-        },
-        {
-          internalType: "string",
-          name: "_baseURIForTokens",
-          type: "string",
-        },
-        {
-          internalType: "bytes",
-          name: "_data",
-          type: "bytes",
-        },
-      ],
-      name: "lazyMint",
-      outputs: [],
-      stateMutability: "nonpayable",
-      type: "function",
-    },
+    abi: lazyMintAbi,
+    functionName: "lazyMint",
     args: [amount, baseURIForTokens, data],
-    name: "lazyMint",
   });
 };
 
 function PreviewBookDetail({ projectIndex, itemIndex }) {
   const { primaryWallet } = useDynamicContext();
   const projects = useContext(TasksContext);
-  const { data: hash, isPending, writeContract } = useWriteContract();
-  const [contractCreated, setContractCreted] = useState(false);
+  const dispatch = useContext(TasksDispatchContext);
+  const {
+    data: hash,
+    status,
+    failureReason,
+    isPending,
+    writeContract,
+  } = useWriteContract();
+  const [contractCreated, setContractCreated] = useState(false);
+  const [contractAddress, setContractAddress] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [project, setProject] = useState({});
   const [item, setItem] = useState({});
@@ -140,24 +174,37 @@ function PreviewBookDetail({ projectIndex, itemIndex }) {
 
   // todo: do checks for created contracts (and related chains)
   // add a contracts object on the project object projects.contracts = { chainID, contractAddress, creationDate, creatorAddress, network }
-  function useHandlePublish() {
-    // todo: check if the contract exists -- add the ability to save contract address to the project/item
-
+  async function useHandlePublish() {
     const CreateNFT = () => {
+      /*
       const multiCallAbi = parseAbi(
         "function multicall(bytes[] calldata data) external returns (bytes[] memory results)"
       );
+      */
+      if (!contractAddress) return;
 
-      const startTimeStamp = new Date();
+      const multiCallAbi = [
+        {
+          type: "function",
+          name: "multicall",
+          inputs: [{ type: "bytes[]", name: "data" }],
+          outputs: [{ type: "bytes[]", name: "results" }],
+          stateMutability: "nonpayable",
+        },
+      ];
+
+      const startTimeStamp = new Date().valueOf();
       const maxClaimableSupply = item.supply;
       const supplyClaimed = 0;
       const quantityLimitPerWallet = 1;
       const pricePerToken = 10;
       const currency = USDCPolygonAddress;
-      const metadataURI = item.contractMetadataURI;
+      const metadataURI =
+        "https://ipfs.nftbookbazaar.com/ipfs/" + item.itemMetadataURI;
       const resetClaimEligibility = false;
 
       // set up the claim parameters + merkle tree (figure out how to do that?)
+      /*
       const claimParams = createClaimParams(
         startTimeStamp,
         maxClaimableSupply,
@@ -169,19 +216,64 @@ function PreviewBookDetail({ projectIndex, itemIndex }) {
         metadataURI,
         resetClaimEligibility
       );
+      */
 
-      const mintParams = createLazyMintParams();
+      const mintParams = createLazyMintParams(
+        item.supply,
+        "ipfs://" + item.itemMetadataURI,
+        "0x0"
+      );
 
-      const { lazyMintResult } = useWriteContract({
-        address: item.contractAddress,
+      /*
+      const lazyMintResult = writeContract({
+        address: contractAddress,
         abi: multiCallAbi,
         functionName: "multicall",
-        args: [[claimParams, mintParams]],
+        args: [[mintParams]],
+      });
+      */
+      const lazyMintResult = writeContract({
+        address: contractAddress,
+        abi: lazyMintAbi,
+        functionName: "lazyMint",
+        args: [item.supply, "ipfs://" + item.itemMetadataURI, "0x"],
       });
       return lazyMintResult;
     };
 
-    const result = CreateNFT();
+    setContractCreated(true);
+
+    setContractAddress("0x47388b68a82ade189a6e4e9cd037087c4952aa61");
+    // 0xD6F49bD9e9B6D30CE537Cf21521880544D878bCa
+    /*
+    if (!contractCreated) {
+      const response = await axios.post(
+        `${import.meta.env.VITE_APP_BACKEND_API_URL}/deploy`,
+        {
+          project: project,
+          creatorAddress: primaryWallet.address,
+          contractMetadataHash: item.contractMetadataURI,
+          royaltybps: 1000,
+          contractSalt: projectIndex + 1 * 1200 + itemIndex + 1 + new Date().valueOf(),
+        }
+      );
+      // todo: save the contract address to the project using the tasksdispatchcontext
+
+      // set up fake contract creation stuff.
+      console.log(        {
+        project: project,
+        creatorAddress: primaryWallet.address,
+        contractMetadataHash: item.contractMetadataURI,
+        royaltybps: 1000,
+        contractSalt: projectIndex + 1 * 1200 + itemIndex + 1 + new Date().valueOf(),
+      });
+
+      //project.items[itemIndex].contracts[0].contractAddress = response.data;
+      setContractCreated(true);
+    }
+    */
+    //todo: this should show a modal or switch page or something
+    CreateNFT();
   }
 
   useEffect(() => {
@@ -195,12 +287,13 @@ function PreviewBookDetail({ projectIndex, itemIndex }) {
       setIsLoading(false);
       setProject(projects[projectIndex]);
       setItem(projects[projectIndex].items[itemIndex]);
-      const project = projects[projectIndex];
-
-      console.log("project", project);
-
+      console.log(item);
     }
   }, [projects, primaryWallet, project, projectIndex, itemIndex, item]);
+
+  useEffect(() => {
+    console.log(hash);
+  }, [hash]);
 
   return (
     <>
@@ -215,7 +308,8 @@ function PreviewBookDetail({ projectIndex, itemIndex }) {
         <div className="container mx-auto justify-center flex w-full">
           <div className="w-1/2 p-8 bg-neutral-50 rounded-lg flex-col justify-start items-start gap-6  mb-20">
             {item.interactiveURL && (
-              <iframe allowFullScreen
+              <iframe
+                allowFullScreen
                 className="flex-col justify-start items-center gap-4 w-full min-h-96 inline-flex"
                 src={`https://ipfs.nftbookbazaar.com/ipfs/${item.interactiveURL}`}
               />
@@ -343,10 +437,15 @@ function PreviewBookDetail({ projectIndex, itemIndex }) {
                                         px-8 py-3 bg-dao-primary rounded-lg w-full"
                     disabled={isLoading || isPending}
                   >
-                    {isPending ? "Confirming..." : isLoading ? "..." : "Publish Now"}
+                    {isPending
+                      ? "Confirming..."
+                      : isLoading
+                      ? "..."
+                      : "Publish Now"}
                   </button>
                 </div>
               </div>
+              {status} {JSON.stringify(failureReason)}
             </div>
           </div>
         </div>

@@ -29,7 +29,7 @@ function Content() {
 
   const nextItemId = useMemo(
     () =>
-      tasks.length > 0 ? Math.max(...tasks.map((task) => task.id)) + 1 : 1,
+      tasks ? tasks.length > 0 ? Math.max(...tasks.map((task) => task.id)) + 1 : 1 : null,
     [tasks]
   );
 

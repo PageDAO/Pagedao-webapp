@@ -45,23 +45,6 @@ function PreviewBook() {
   return (
     <>
       <TopNav />
-      <AccountInfo />
-      {isLoading ? (
-        "Loading..."
-      ) : (
-        <SimplePreviewDetailTwo
-          project={projects[params.projectIndex]}
-          creatorAddress={primaryWallet.address}
-          contractMetadataHash={
-            projects[params.projectIndex].items[params.itemIndex]
-              .contractMetadataURI
-          }
-          royaltybps={1000}
-          contractSalt={numberToHex(
-            params.projectIndex + 1 * 3000 + params.itemIndex + 3
-          )}
-        />
-      )}
       <PreviewBookDetail projectIndex={params.projectIndex} itemIndex={params.itemIndex}/>
       <Footer />
     </>
