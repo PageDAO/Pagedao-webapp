@@ -48,7 +48,7 @@
     "secretjs": "^1.12.5",
     "sort-by": "^1.2.0",
     "thirdweb": "^5.23.0",
-    "viem": "^2.7.22",
+    "viem": "^2.15.1",
     "wagmi": "^2.5.7"
   },
   "devDependencies": {
