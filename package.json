@@ -10,7 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@axelar-network/axelarjs-sdk": "^0.14.1",
+    "@axelar-network/axelarjs-sdk": "^0.16.0",
     "@cosmjs/encoding": "^0.32.2",
     "@dynamic-labs/algorand": "^2.0.6",
     "@dynamic-labs/blocto-evm": "^2.0.6",
