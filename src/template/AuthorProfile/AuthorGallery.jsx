@@ -26,7 +26,7 @@ function AuthorGallery({author, iscurrentuser }) {
           <div className="content-tabs">
             <div className="tabcontent" style={{ display: activeTab === 0 ? 'block' : 'none' }}>
               <div className="flex justify-between container mx-auto ml-0 mx-30 mt-10">
-                <div className="p-5">
+                author.<div className="p-5">
                   <img
                     width={300}
                     height={500}

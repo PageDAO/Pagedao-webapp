@@ -32,7 +32,7 @@ import {
   evmos,
   zora,
 } from "viem/chains";
-import { MetaMaskWallet } from "secretjs";
+import { MetaMaskWallet, pubkeyToAddress } from "secretjs";
 import {} from "viem/accounts";
 import axios from "axios";
 import { TasksProvider } from "./template/Providers/TasksContext";
@@ -197,8 +197,7 @@ const config = createConfig({
 const queryClient = new QueryClient();
 
 const reservoirPolygon = reservoirChains.polygon;
-reservoirPolygon.chainIcon =
-  "https://app.dynamic.xyz/assets/networks/polygon.svg";
+reservoirPolygon.chainIcon = "https://app.dynamic.xyz/assets/networks/polygon.svg";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
@@ -254,7 +253,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
                     // let's add this to the user's wallet collection (and above, check if it exists)
                     args.primaryWallet.connector
                       .setAdditionalAddresses(args.primaryWallet.address, [
-                        secretjsWallet.address,
+                        secretjsWallet.address, pubkeyToAddress(pubKey, "osmo")
                       ])
                       .then((result) => {
                         console.log(secretjsWallet, result);
@@ -275,7 +274,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
       <WagmiProvider config={config}>
         <QueryClientProvider client={queryClient}>
           <DynamicWagmiConnector suppressChainMismatchError>
-            <ThirdwebProvider clientId={'f249a59bdff8d2da0eb19725b90c6904'} autoConnect={true}> 
+            <ThirdwebProvider clientId={import.meta.env.VITE_APP_THIRDWEB_CLIENTID} autoConnect={true}> 
             <ReservoirKitProvider
               options={{
                 apiKey: import.meta.env.VITE_APP_RESERVOIR_API_KEY,

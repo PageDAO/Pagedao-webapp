@@ -16,7 +16,7 @@ function ProjectItem({project, projectIndex, item, itemIndex}) {
                             className="px-2 py-1 left-[16px] top-[16px] absolute bg-amber-200 rounded-lg justify-center items-center gap-2 inline-flex">
                             <div
                                 className="text-neutral-800 text-sm font-normal font-['DM Sans'] leading-tight">
-                                {item.releases?.Length ? "Published" : "Unpublished"}
+                                {item.contracts[0].contractAddress ? "Published" : "Unpublished"}
                             </div>
                         </div>
                     </div>

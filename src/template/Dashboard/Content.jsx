@@ -111,7 +111,7 @@ function Content() {
               <Toast.Viewport className="ToastViewport" />
             </div>
             <div className="basis-1/4 w-full">
-              <SideBar />
+              <SideBar projects={tasks}/>
             </div>
           </div>
         </div>

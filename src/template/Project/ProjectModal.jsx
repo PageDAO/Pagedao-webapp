@@ -56,6 +56,7 @@ function ProjectModal({ modalIsOpen, setIsOpen, type, itemID }) {
       text: data.project_name.value,
       title: data.project_name.value,
       description: data.description.value,
+      nextItemID: 0,
       items: [],
       userUpdateFunction: updateUser,
     });

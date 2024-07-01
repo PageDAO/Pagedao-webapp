@@ -1,5 +1,5 @@
 import { useState, useRef, useContext, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Percent, UploadCloud } from "lucide-react";
 import { degrees, PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import {
@@ -12,33 +12,46 @@ import {
   encryptAndStoreItem,
   fetchMetadata,
   saveMetadata,
+  genreTags,
+  itemTypeTags,
+  descriptorTags,
 } from "../Utils";
 import {
   TasksContext,
   TasksDispatchContext,
 } from "../Providers/TasksContext.js";
 import * as Toast from "@radix-ui/react-toast";
+import Select from "react-select";
+import { createThirdwebClient } from "thirdweb";
+import { upload } from "thirdweb/storage";
 
 function AddBookDetail({ projectIndex, itemIndex }) {
   const { isAuthenticated, user } = useDynamicContext();
   const projects = useContext(TasksContext);
   const { updateUser } = useUserUpdateRequest();
   const [isModified, setIsModified] = useState(false);
+  const [changes, setChanges] = useState({ coverImage: false, pdfData: false });
   const [coverImage, setCoverImage] = useState();
   const [isHovering, setIsHovering] = useState(false);
   const [allowPreview, setAllowPreview] = useState(false);
   const [percentagePreview, setPercentagePreview] = useState(10);
   const [bookName, setBookName] = useState("");
   const [description, setDescription] = useState("");
+  const [price, setPrice] = useState(5); // todo: add price to the form and save it to the metadata
   const [supply, setSupply] = useState(1000);
+  const [itemType, setItemType] = useState("");
+  const [genre, setGenre] = useState([]);
+  const [tags, setTags] = useState([]);
   const [pdfData, setPdfData] = useState(null);
   const [filename, setFilename] = useState("");
   const [open, setOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const timerRef = useRef(0);
   const dispatch = useContext(TasksDispatchContext);
-  const [newItemID, setNewItemID] = useState();
   const navigate = useNavigate();
+  const client = createThirdwebClient({
+    clientId: import.meta.env.VITE_APP_THIRDWEB_CLIENT_ID,
+  });
 
   useEffect(() => {
     // prepopulate things if itemindex is provided
@@ -59,7 +72,20 @@ function AddBookDetail({ projectIndex, itemIndex }) {
       );
       setDescription(projects[projectIndex].items[itemIndex].description);
       setSupply(projects[projectIndex].items[itemIndex].supply);
-      setNewItemID(itemIndex);
+      if (projects[projectIndex].items[itemIndex].price)
+        setPrice(projects[projectIndex].items[itemIndex].price);
+      //setNewItemID(projects[projectIndex].nextItemID);
+      setItemType(projects[projectIndex].items[itemIndex].type);
+      setGenre(
+        projects[projectIndex].items[itemIndex].genre
+          .split(", ")
+          .map((genre) => ({ value: genre, label: genre }))
+      );
+      setTags(
+        projects[projectIndex].items[itemIndex].tags
+          .split(", ")
+          .map((tag) => ({ value: tag, label: tag }))
+      );
     }
   }, [projects, projectIndex, itemIndex]);
 
@@ -85,6 +111,7 @@ function AddBookDetail({ projectIndex, itemIndex }) {
       reader.onloadend = () => {
         // Update the status with this new image URL
         setCoverImage(reader.result);
+        setChanges({ pdfData: changes.pdfData, coverImage: true });
         setIsHovering(false);
         setIsModified(true);
       };
@@ -98,6 +125,7 @@ function AddBookDetail({ projectIndex, itemIndex }) {
       const reader = new FileReader();
       reader.onloadend = () => {
         setFilename(file.name);
+        setChanges({ pdfData: true, coverImage: changes.coverImage });
         setPdfData(reader.result);
         setIsModified(true);
       };
@@ -118,20 +146,20 @@ function AddBookDetail({ projectIndex, itemIndex }) {
   };
 
   const goToCreate = async () => {
-    // todo: check the itemindex
-    // set pdfPreview - just call saveDraft (todo: add a dirty flag if data has been changed since draft was saved)
     await saveDraft();
+
     navigate(
       "/book/preview/" +
         projectIndex +
         "/" +
-        (itemIndex ? itemIndex : newItemID)
+        (itemIndex ? itemIndex : projects[projectIndex].items.length)
     );
-    // navigate to PreviewBook
   };
 
-  function saveDraftAndReturn() {
-    if (saveDraft()) navigate("/project/" + projectIndex);
+  async function saveDraftAndReturn() {
+    const result = await saveDraft();
+    console.log(result);
+    //if (result) navigate("/project/" + projectIndex);
   }
 
   const validateForm = () => {
@@ -151,7 +179,7 @@ function AddBookDetail({ projectIndex, itemIndex }) {
     if (!supply) {
       message += "Supply is missing. ";
     }
-    if (!pdfData) {
+    if (!pdfData && !filename && !projects[projectIndex].items[itemIndex].pdf) {
       message += "PDF data is missing. ";
     }
     if (!coverImage) {
@@ -172,39 +200,61 @@ function AddBookDetail({ projectIndex, itemIndex }) {
   async function saveDraft() {
     if (!validateForm()) return false;
 
-    // this only works if the itemIndex is not set
-    setNewItemID(projects[projectIndex].items.length);
+    console.log("trying to save draft");
+    // todo: fix this for modifying items this only works if the itemIndex is not set
     const projectItem = await createProjectItem();
-    dispatch({
-      type: "projectItemAdded",
-      id: projects[projectIndex].id,
-      item: projectItem,
-      userUpdateFunction: updateUser,
-    });
+    if (!itemIndex) {
+      dispatch({
+        type: "projectItemAdded",
+        id: projects[projectIndex].id,
+        item: projectItem,
+        userUpdateFunction: updateUser,
+      });
+    } else {
+      dispatch({
+        type: "projectItemChanged",
+        id: projects[projectIndex].id,
+        item: projectItem,
+        userUpdateFunction: updateUser,
+      });
+    }
 
     setIsModified(false);
     return true;
   }
 
   const createProjectItem = async () => {
-    const coverImageFile = new File(
-      [await fetch(coverImage).then((r) => r.blob())],
-      "coverImage"
-    );
-    const coverImageURI = await uploadToAPI(
-      new File([coverImageFile], coverImageFile.name)
-    );
+    const coverImageFile =
+      changes.coverImage || !itemIndex
+        ? new File(
+            [await fetch(coverImage).then((r) => r.blob())],
+            "coverImage"
+          )
+        : null;
+    const coverImageURI =
+      changes.coverImage || !itemIndex
+        ? await uploadToAPI(new File([coverImageFile], coverImageFile.name))
+        : projects[projectIndex].items[itemIndex].image;
 
-    // todo: do detection on filetype and add character 
+    // todo: do detection on filetype and add character
 
-    const { modifiedPDF, pageCount, previewPages } = await modifyPdf(
-      pdfData,
-      coverImage,
-      percentagePreview
-    );
-    const pdfURI = await uploadToAPI(new File([modifiedPDF], "modifiedPDF"));
+    const { modifiedPDF, pageCount, previewPages } =
+      changes.pdfData || !itemIndex
+        ? await modifyPdf(pdfData, coverImage, percentagePreview)
+        : {
+            modifiedPDF: null,
+            pageCount: projects[projectIndex].items[itemIndex].pages,
+            previewPages: projects[projectIndex].items[itemIndex].previewPages,
+          };
+    const pdfURI =
+      changes.pdfData || !itemIndex
+        ? await uploadToAPI(new File([modifiedPDF], "modifiedPDF"))
+        : projects[projectIndex].items[itemIndex].pdf;
 
-    const encryptedDocid = await encryptPdf(pdfData);
+    const encryptedDocid =
+      changes.pdfData || !itemIndex
+        ? await encryptPdf(pdfData)
+        : projects[projectIndex].items[itemIndex].encryptedfile;
 
     // background image is a gradient designed to make it easier to read
     const options = {
@@ -221,12 +271,26 @@ function AddBookDetail({ projectIndex, itemIndex }) {
     const html = Buffer.from(generateBookFromTemplate(options), "utf8");
     const htmlURI = await uploadToAPI(html, "index.html");
 
+    // todo: add tags, genre, and type as attributes
     const itemMetadata = {
       name: bookName,
       description: description,
       image: "https://ipfs.nftbookbazaar.com/" + coverImageURI,
       external_link: "https://ipfs.nftbookbazaar.com/" + htmlURI,
       animation_url: "https://ipfs.nftbookbazaar.com/" + htmlURI,
+      attributes: [
+        { trait_type: "Type", value: itemType },
+        ...tags.map((tag) => ({ trait_type: "Tag", value: tag })),
+        ...genre.map((tag) => ({ trait_type: "Genre", value: tag })),
+        { trait_type: "Pages", value: pageCount },
+        { trait_type: "Author", value: user.username },
+        {
+          display_type: "boost_percentage",
+          trait_type: "Available Preview",
+          value: percentagePreview,
+        },
+        { display_type: "number", trait_type: "Version", value: 1 },
+      ],
       secret_contract: "secret1kzejyxq0kmecx2455crw78uwrqkwref35kd7a6",
       secret_hash:
         "0bbc0a2b7312513044f1ebc69e0f7f785963a00d488d160fd01d46acdff7cea6",
@@ -234,21 +298,35 @@ function AddBookDetail({ projectIndex, itemIndex }) {
       seller_fee_basis_points: 1000,
       fee_recipient: user.wallet?.address,
     };
-    const itemMetadataURI = await uploadToAPI(JSON.stringify(itemMetadata), "metadata.json");
+
+    const itemMetadataURI = await uploadToAPI(
+      JSON.stringify(itemMetadata),
+      "metadata.json"
+    );
 
     const contractMetadata = {
-      name: "PageDAO project: " + projects[projectIndex].name,
+      name: `${projects[projectIndex].title} - ${itemType}`,
       symbol: bookName.toUpperCase().substring(0, 5),
       image: "https://ipfs.nftbookbazaar.com/ipfs/" + coverImageURI,
       seller_fee_basis_points: 1000,
       fee_recipient: user.wallet?.address,
     };
 
-    const contractMetadataURI = await uploadToAPI(JSON.stringify(contractMetadata), "contract.json");
+    //note: try thirdweb ipfs upload here because ehhh it doesn't like our IPFS server?
+    const contractMetadataURI = await upload({
+      client: client,
+      files: [new File([JSON.stringify(contractMetadata)], "0")],
+    });
+    /*
+    const contractMetadataURI = await uploadToAPI(
+      JSON.stringify(contractMetadata),
+      "contract.json"
+    );
+    */
 
     // definitely figure out this id thing for items!
     const projectItem = {
-      id: newItemID,
+      id: projects[projectIndex].nextItemID,
       name: bookName,
       description: description,
       image: coverImageURI,
@@ -261,8 +339,9 @@ function AddBookDetail({ projectIndex, itemIndex }) {
       interactiveURL: htmlURI,
       previewPages: previewPages,
       pages: pageCount,
-      genre: "Genre",
-      type: "Book",
+      genre: genre.join(", "),
+      tags: tags.map((option) => option.value).join(", "),
+      type: itemType,
       dateCreated: new Date().toISOString(),
       dateModified: new Date().toISOString(),
       supply: supply,
@@ -273,7 +352,7 @@ function AddBookDetail({ projectIndex, itemIndex }) {
           contractAddress: "",
           tokenStandard: "ERC721",
           deployed: false,
-          price: 0,
+          price: price,
         },
       ],
       status: "Draft",
@@ -282,6 +361,21 @@ function AddBookDetail({ projectIndex, itemIndex }) {
     console.log("projectItem", projectItem);
 
     return projectItem;
+  };
+
+  const handleGenreChange = (selectedOption) => {
+    setGenre(selectedOption.map((option) => option.value));
+    setIsModified(true);
+  };
+
+  const handleTagsChange = (selectedOption) => {
+    setTags(selectedOption);
+    setIsModified(true);
+  };
+
+  const handleItemTypeChange = (selectedOption) => {
+    setItemType(selectedOption.value);
+    setIsModified(true);
   };
 
   const handleAllowPreviewChange = (event) => {
@@ -306,6 +400,11 @@ function AddBookDetail({ projectIndex, itemIndex }) {
 
   const handleSupplyChange = (event) => {
     setSupply(event.target.value);
+    setIsModified(true);
+  };
+
+  const handlePriceChange = (event) => {
+    setPrice(event.target.value);
     setIsModified(true);
   };
 
@@ -522,7 +621,13 @@ function AddBookDetail({ projectIndex, itemIndex }) {
                     <div className="self-stretch px-4 py-3 bg-neutral-50 rounded-lg flex-col justify-start items-start gap-1 flex">
                       <div className="self-stretch justify-start items-start gap-2.5 inline-flex">
                         <div className="text-neutral-500 text-sm font-normal font-['DM Sans'] leading-tight">
-                          Book file <i>(PDF only)</i>
+                          {filename ? (
+                            filename
+                          ) : (
+                            <span>
+                              Book file <i>(PDF only)</i>
+                            </span>
+                          )}
                         </div>
                       </div>
                       <div className="self-stretch justify-start items-center gap-1 inline-flex">
@@ -593,6 +698,77 @@ function AddBookDetail({ projectIndex, itemIndex }) {
                       </div>
                     </div>
                   </div>
+                  <div className="self-stretch rounded-lg flex-col justify-start items-start gap-1 flex">
+                    <div className="self-stretch grow shrink basis-0 pl-4 pr-2 py-3 bg-neutral-50 rounded-lg flex-col justify-start items-start gap-1 flex">
+                      <div className="self-stretch justify-start items-start gap-2.5 inline-flex">
+                        <div className="text-zinc-600 text-sm font-normal font-['DM Sans'] leading-tight">
+                          Tags
+                        </div>
+                      </div>
+                      <div className="self-stretch grow shrink basis-0 justify-start items-start gap-1 inline-flex">
+                        <div className="grow shrink basis-0 justify-start items-center gap-2.5 flex">
+                          Type
+                          <br />
+                          <Select
+                            key={JSON.stringify(itemType)}
+                            cacheOptions
+                            className="w-full"
+                            value={{ value: itemType, label: itemType }}
+                            onChange={handleItemTypeChange}
+                            options={itemTypeTags.map((itemtype) => {
+                              return { value: itemtype, label: itemtype };
+                            })}
+                          />
+                        </div>
+                      </div>
+                      <div className="self-stretch grow shrink basis-0 justify-start items-start gap-1 inline-flex">
+                        <div className="grow shrink basis-0 justify-start items-center gap-2.5 flex">
+                          Genre
+                          <br />
+                          <Select
+                            className="w-full"
+                            isMulti
+                            value={
+                              itemIndex
+                                ? projects[projectIndex].items[itemIndex].genre
+                                    .split(", ")
+                                    .map((item) => {
+                                      return { value: item, label: item };
+                                    })
+                                : genre
+                            }
+                            onChange={handleGenreChange}
+                            options={genreTags.map((item) => {
+                              return { value: item, label: item };
+                            })}
+                          />
+                        </div>
+                      </div>
+                      <div className="self-stretch grow shrink basis-0 justify-start items-start gap-1 inline-flex">
+                        <div className="grow shrink basis-0 justify-start items-center gap-2.5 flex">
+                          Tags
+                          <br />
+                          <Select
+                            className="w-full"
+                            isMulti
+                            value={
+                              itemIndex
+                                ? projects[projectIndex].items[itemIndex].tags
+                                    .split(", ")
+                                    .map((item) => {
+                                      return { value: item, label: item };
+                                    })
+                                : tags
+                            }
+                            onChange={handleTagsChange}
+                            options={descriptorTags.map((itemtype) => {
+                              return { value: itemtype, label: itemtype };
+                            })}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 <div className="self-stretch flex-col justify-start items-start gap-4 flex">
                   <div className="text-neutral-800 text-2xl font-bold font-['Arvo'] leading-normal">
@@ -616,10 +792,21 @@ function AddBookDetail({ projectIndex, itemIndex }) {
                         />
                       </div>
                     </div>
-                    <div className="self-stretch px-4 justify-start items-start gap-2.5 inline-flex">
-                      <div className="grow shrink basis-0 text-gray-600 text-sm font-normal font-['DM Sans'] leading-tight">
-                        This will determine how many copies you are ready to
-                        sell for your readers.
+                    <div className="self-stretch pl-4 pr-2 py-3 bg-neutral-50 rounded-lg flex-col justify-start items-start gap-1 flex">
+                      <div className="self-stretch justify-start items-start gap-2.5 inline-flex">
+                        <div className="text-zinc-600 text-sm font-normal font-['DM Sans'] leading-tight">
+                          Price (USD)
+                        </div>
+                      </div>
+                      <div className="self-stretch justify-start items-start gap-1 inline-flex">
+                        <input
+                          className="bg-transparent py-2 text-black border-0 text-base font-normal font-['DM Sans'] leading-snug w-full focus:outline-none"
+                          name="price"
+                          type="text"
+                          placeholder="25"
+                          onChange={handlePriceChange}
+                          value={price}
+                        />
                       </div>
                     </div>
                   </div>
@@ -677,25 +864,49 @@ function AddBookDetail({ projectIndex, itemIndex }) {
                   </div>
                 </div>
               </div>
-              <div className="self-stretch justify-start items-start gap-4 inline-flex">
-                <div className="justify-center items-center gap-1 flex">
-                  <button
-                    className="px-16 py-3 rounded-lg border border-neutral-800 text-neutral-800 text-base font-bold font-['DM Sans'] leading-snug"
-                    onClick={saveDraftAndReturn}
-                  >
-                    Save draft
-                  </button>
-                </div>
+              {itemIndex &&
+              projects &&
+              projects[projectIndex] && 
+              projects[projectIndex].items[itemIndex] &&
+              projects[projectIndex].items[itemIndex].contracts[0]
+                .contractAddress ? (
                 <div className="grow shrink basis-0 justify-center items-center gap-1 flex">
                   {/* call save and then navigate to preview page */}
-                  <button
-                    className="px-8 py-3 bg-dao-primary rounded-lg text-center text-neutral-50 text-base font-bold font-['DM Sans'] leading-snug w-full"
-                    onClick={goToCreate}
+                  <Link
+                    className="px-8 py-3 bg-dao-primary rounded-lg text-center text-neutral-50 text-base font-bold font-['DM Sans'] leading-snug w-full cursor-pointer"
+                    to={
+                      "/book/" +
+                      user.userId +
+                      "/" +
+                      projects[projectIndex].id +
+                      "/" +
+                      itemIndex
+                    }
                   >
-                    Next, Preview
-                  </button>
+                    View Published Item
+                  </Link>
                 </div>
-              </div>
+              ) : (
+                <div className="self-stretch justify-start items-start gap-4 inline-flex">
+                  <div className="justify-center items-center gap-1 flex">
+                    <button
+                      className="px-16 py-3 rounded-lg border border-neutral-800 text-neutral-800 text-base font-bold font-['DM Sans'] leading-snug cursor-pointer"
+                      onClick={saveDraftAndReturn}
+                    >
+                      Save draft
+                    </button>
+                  </div>
+                  <div className="grow shrink basis-0 justify-center items-center gap-1 flex">
+                    {/* call save and then navigate to preview page */}
+                    <button
+                      className="px-8 py-3 bg-dao-primary rounded-lg text-center text-neutral-50 text-base font-bold font-['DM Sans'] leading-snug w-full cursor-pointer"
+                      onClick={goToCreate}
+                    >
+                      Next, Preview
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -736,7 +947,7 @@ function AddBookDetail({ projectIndex, itemIndex }) {
                       Claim
                     </div>
                     <div className="text-right text-zinc-400 text-xl font-medium font-['DM Sans'] leading-7">
-                      Claim Price 0.001 ETH
+                      Claim Price ${price} USD
                     </div>
                   </div>
                   <div className="self-stretch pb-2 border-b border-neutral-500 flex-col justify-start items-start gap-2 flex">
@@ -757,8 +968,8 @@ function AddBookDetail({ projectIndex, itemIndex }) {
                   </div>
                   <div className="p-4 bg-amber-100 rounded-lg justify-center items-center gap-2 inline-flex">
                     <div className="grow shrink basis-0 text-neutral-800 text-lg font-normal font-['DM Sans'] leading-relaxed">
-                      Your content is stored and computed on encrypted data
-                      through Secret Network.
+                      Your content is encrypted and secured by Decentralized
+                      Confidential Computing (DeCC) through Secret Network.
                     </div>
                   </div>
                 </div>

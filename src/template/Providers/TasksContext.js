@@ -97,6 +97,7 @@ function tasksReducer(tasks, action) {
           title: action.title,
           description: action.description,
           items: action.items,
+          nextItemID: 0,
           done: false,
         },
       ];
@@ -121,25 +122,26 @@ function tasksReducer(tasks, action) {
     }
     case "projectItemAdded": {
       console.log("projectItemAdded called:", action);
-      const newTasks = tasks.map((t) => {
-        if (t.id === action.id) {
+      const newTasks = tasks.map((p) => {
+        if (p.id === action.id) {
+          p.nextItemID = p.nextItemID + 1;
           return {
-            ...t,
-            items: [...t.items, action.item],
+            ...p,
+            items: [...p.items, action.item],
           };
         } else {
-          return t;
+          return p;
         }
       });
       saveIfNecessary(action.userUpdateFunction, newTasks);
       return newTasks;
     }
     case "projectItemChanged": {
-      const newTasks = tasks.map((t) => {
-        if (t.id === action.id) {
+      const newTasks = tasks.map((p) => {
+        if (p.id === action.id) {
           return {
-            ...t,
-            items: t.items.map((i) => {
+            ...p,
+            items: p.items.map((i) => {
               if (i.id === action.item.id) {
                 return action.item;
               } else {
@@ -148,7 +150,7 @@ function tasksReducer(tasks, action) {
             }),
           };
         } else {
-          return t;
+          return p;
         }
       });
       saveIfNecessary(action.userUpdateFunction, newTasks);

@@ -14,6 +14,7 @@ import Marketplace from './template/Marketplace/Marketplace.jsx';
 import EditAuthorInfo from './template/AuthorProfile/EditAuthorInfo.jsx';
 import ItemView from './template/Project/ItemView.jsx';
 import ProjectView from './template/Project/ProjectView.jsx';
+//import Profile from './portfolio/Profile.jsx';
 
 function App() {
     const isLoggedIn = useIsLoggedIn();
@@ -68,7 +69,7 @@ function App() {
             element: isLoggedIn ? <Publishing/> : <Login/>,
         },
         {
-            path: "/book/publishing-done",
+            path: "/book/publishing-done/:projectIndex/:itemIndex",
             element: isLoggedIn ? <PublishingDone/> : <Login/>,
         },
         {

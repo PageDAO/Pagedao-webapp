@@ -1,124 +1,50 @@
-import { Link } from "react-router-dom";
-import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
+import { Link, useNavigate } from "react-router-dom";
+import {
+  useDynamicContext,
+  useUserUpdateRequest,
+} from "@dynamic-labs/sdk-react-core";
 import { useWriteContract, useAccount } from "wagmi";
-import { parseAbi, encodeFunctionData } from "viem";
-import { useEffect, useState, useContext } from "react";
+import { toHex, parseAbi, encodeFunctionData } from "viem";
+import { useEffect, useState, useMemo, useContext } from "react";
 import axios from "axios";
 
 import { TasksContext, TasksDispatchContext } from "../Providers/TasksContext";
 import { setClaimConditions } from "thirdweb/extensions/erc721";
 import { createThirdwebClient, getContract } from "thirdweb";
+import { polygon } from "thirdweb/chains";
 
-const USDCPolygonAddress = "0xD4F1ff97298F6793839Fae27E759DA45ace057C3";
+const USDCPolygonAddress = "0x3c499c542cef5e3811e1192ce70d8cc03d5c3359";
 
 const createClaimParams = (
   contract,
   startTimeStamp,
   maxClaimableSupply,
-  supplyClaimed,
-  quantityLimitPerWallet,
-  merkletree,
   pricePerToken,
-  currency,
-  metadataURI,
-  resetClaimEligibility
+  currency
 ) => {
-  console.log(startTimeStamp);
-  console.log(maxClaimableSupply);
-  console.log(supplyClaimed);
-  console.log(quantityLimitPerWallet);
-  console.log(merkletree);
-  console.log(pricePerToken);
-  console.log(currency);
-  console.log(metadataURI);
-  console.log(resetClaimEligibility);
-
   const tx = setClaimConditions({
     contract,
     phases: [
       {
-        maxClaimableSupply: 100n,
-        maxClaimablePerWallet: 1n,
-        currencyAddress: "0x...",
-        price: 0.1,
+        maxClaimableSupply: maxClaimableSupply,
+        maxClaimablePerWallet: maxClaimableSupply,
+        currencyAddress: currency,
+        price: pricePerToken,
         startTime: new Date(),
       },
     ],
   });
-
-  return tx;
-  /*
-  return encodeFunctionData({
-    abi: [{
-      inputs: [
-        {
-          components: [
-            {
-              internalType: "uint256",
-              name: "startTimestamp",
-              type: "uint256",
-            },
-            {
-              internalType: "uint256",
-              name: "maxClaimableSupply",
-              type: "uint256",
-            },
-            {
-              internalType: "uint256",
-              name: "supplyClaimed",
-              type: "uint256",
-            },
-            {
-              internalType: "uint256",
-              name: "quantityLimitPerWallet",
-              type: "uint256",
-            },
-            { internalType: "bytes32", name: "merkleRoot", type: "bytes32" },
-            {
-              internalType: "uint256",
-              name: "pricePerToken",
-              type: "uint256",
-            },
-            { internalType: "address", name: "currency", type: "address" },
-            { internalType: "string", name: "metadata", type: "string" },
-          ],
-          internalType: "struct IClaimCondition.ClaimCondition[]",
-          name: "_conditions",
-          type: "tuple[]",
-        },
-        {
-          internalType: "bool",
-          name: "_resetClaimEligibility",
-          type: "bool",
-        },
-      ],
-      name: "setClaimConditions",
-      outputs: [],
-      stateMutability: "nonpayable",
-      type: "function",
-    }],
-    functionName: "setClaimConditions",
-    args: [
-      [
-        startTimeStamp,
-        maxClaimableSupply,
-        supplyClaimed,
-        quantityLimitPerWallet,
-        merkletree,
-        pricePerToken,
-        currency,
-        metadataURI,
-      ],
-      resetClaimEligibility,
-    ],
-  });
-  */
+  let returnedData = (async function () {
+    return await tx.data();
+  })();
+  return returnedData;
 };
 
 const createMerkleTree = (address) => {
   console.log("null merkle tree:", address);
   return [];
 };
+
 const lazyMintAbi = [
   {
     type: "function",
@@ -155,6 +81,8 @@ const createLazyMintParams = (amount, baseURIForTokens, data) => {
 
 function PreviewBookDetail({ projectIndex, itemIndex }) {
   const { primaryWallet } = useDynamicContext();
+  const { updateUser } = useUserUpdateRequest();
+
   const projects = useContext(TasksContext);
   const dispatch = useContext(TasksDispatchContext);
   const {
@@ -169,19 +97,25 @@ function PreviewBookDetail({ projectIndex, itemIndex }) {
   const [isLoading, setIsLoading] = useState(true);
   const [project, setProject] = useState({});
   const [item, setItem] = useState({});
+  const navigate = useNavigate();
 
   const wagmiAccount = useAccount();
+  const client = createThirdwebClient({
+    clientId: import.meta.env.VITE_APP_THIRDWEB_CLIENT_ID,
+  });
 
   // todo: do checks for created contracts (and related chains)
   // add a contracts object on the project object projects.contracts = { chainID, contractAddress, creationDate, creatorAddress, network }
   async function useHandlePublish() {
     const CreateNFT = () => {
-      /*
-      const multiCallAbi = parseAbi(
-        "function multicall(bytes[] calldata data) external returns (bytes[] memory results)"
-      );
-      */
       if (!contractAddress) return;
+
+      console.log("publishing:", contractAddress);
+      const contract = getContract({
+        client: client,
+        chain: polygon,
+        address: contractAddress,
+      });
 
       const multiCallAbi = [
         {
@@ -193,87 +127,81 @@ function PreviewBookDetail({ projectIndex, itemIndex }) {
         },
       ];
 
-      const startTimeStamp = new Date().valueOf();
       const maxClaimableSupply = item.supply;
-      const supplyClaimed = 0;
-      const quantityLimitPerWallet = 1;
-      const pricePerToken = 10;
+      const pricePerToken = item.contracts[0].price;
       const currency = USDCPolygonAddress;
       const metadataURI =
-        "https://ipfs.nftbookbazaar.com/ipfs/" + item.itemMetadataURI;
-      const resetClaimEligibility = false;
+        "https://ipfs.nftbookbazaar.com/ipfs/" + item.itemMetadataURI + "?";
 
-      // set up the claim parameters + merkle tree (figure out how to do that?)
-      /*
-      const claimParams = createClaimParams(
-        startTimeStamp,
-        maxClaimableSupply,
-        supplyClaimed,
-        quantityLimitPerWallet,
-        createMerkleTree(primaryWallet.address),
-        pricePerToken,
-        currency,
-        metadataURI,
-        resetClaimEligibility
-      );
-      */
+      setClaimConditions({
+        contract,
+        phases: [
+          {
+            maxClaimableSupply: maxClaimableSupply,
+            maxClaimablePerWallet: maxClaimableSupply,
+            currencyAddress: currency,
+            price: pricePerToken,
+            startTime: new Date(),
+          },
+        ],
+      })
+        .data()
+        .then((data) => {
+          const mintParams = createLazyMintParams(
+            item.supply,
+            metadataURI,
+            "0x"
+          );
 
-      const mintParams = createLazyMintParams(
-        item.supply,
-        "ipfs://" + item.itemMetadataURI,
-        "0x0"
-      );
+          console.log("calling multicall", data, mintParams);
+          const multicallResult = writeContract({
+            address: contractAddress,
+            abi: multiCallAbi,
+            functionName: "multicall",
+            args: [[data, mintParams]],
+          });
 
-      /*
-      const lazyMintResult = writeContract({
-        address: contractAddress,
-        abi: multiCallAbi,
-        functionName: "multicall",
-        args: [[mintParams]],
-      });
-      */
-      const lazyMintResult = writeContract({
-        address: contractAddress,
-        abi: lazyMintAbi,
-        functionName: "lazyMint",
-        args: [item.supply, "ipfs://" + item.itemMetadataURI, "0x"],
-      });
-      return lazyMintResult;
+          return multicallResult;
+        });
     };
-
-    setContractCreated(true);
-
-    setContractAddress("0x47388b68a82ade189a6e4e9cd037087c4952aa61");
-    // 0xD6F49bD9e9B6D30CE537Cf21521880544D878bCa
-    /*
+    function generateSalt(projects, projectIndex, itemIndex) {
+      return (
+        projects[projectIndex].id * 5000 +
+        projects[projectIndex].items[itemIndex].id
+      );
+    }
+    //todo: this should show a modal or switch page or something
     if (!contractCreated) {
-      const response = await axios.post(
-        `${import.meta.env.VITE_APP_BACKEND_API_URL}/deploy`,
-        {
+      axios
+        .post(`${import.meta.env.VITE_APP_BACKEND_API_URL}/deploy`, {
           project: project,
           creatorAddress: primaryWallet.address,
-          contractMetadataHash: item.contractMetadataURI,
+          contractMetadataHash: item.contracts[0].contractMetadataHash,
           royaltybps: 1000,
-          contractSalt: projectIndex + 1 * 1200 + itemIndex + 1 + new Date().valueOf(),
-        }
+          contractSalt: generateSalt(projects, projectIndex, itemIndex), //projectIndex + 1 * 1400 + itemIndex + 1,
+        })
+        .then((response) => {
+          console.log("response:", response.data.result);
+          if (response.data.result !== "error") {
+            setContractAddress(response.data.result);
+            item.contracts[0].contractAddress = response.data.result;
+            dispatch({
+              type: "projectItemChanged",
+              id: item.id,
+              item: item,
+              userUpdateFunction: updateUser,
+            });
+
+            CreateNFT();
+          }
+          // todo: save the contract address and published status to the project using the tasksdispatchcontext
+        });
+    } else {
+      console.log(
+        "contract created... trying to mint the nft and set claim conditions"
       );
-      // todo: save the contract address to the project using the tasksdispatchcontext
-
-      // set up fake contract creation stuff.
-      console.log(        {
-        project: project,
-        creatorAddress: primaryWallet.address,
-        contractMetadataHash: item.contractMetadataURI,
-        royaltybps: 1000,
-        contractSalt: projectIndex + 1 * 1200 + itemIndex + 1 + new Date().valueOf(),
-      });
-
-      //project.items[itemIndex].contracts[0].contractAddress = response.data;
-      setContractCreated(true);
+      CreateNFT();
     }
-    */
-    //todo: this should show a modal or switch page or something
-    CreateNFT();
   }
 
   useEffect(() => {
@@ -284,16 +212,36 @@ function PreviewBookDetail({ projectIndex, itemIndex }) {
       itemIndex &&
       projects.length > 0
     ) {
+      const contractAddressTemp =
+        projects[projectIndex].items[itemIndex].contracts[0].contractAddress;
       setIsLoading(false);
       setProject(projects[projectIndex]);
       setItem(projects[projectIndex].items[itemIndex]);
+      if (contractAddressTemp) {
+        setContractAddress(contractAddressTemp);
+        setContractCreated(true);
+      }
       console.log(item);
     }
   }, [projects, primaryWallet, project, projectIndex, itemIndex, item]);
 
   useEffect(() => {
-    console.log(hash);
-  }, [hash]);
+    if (status === "error") {
+      console.log("error minting:", failureReason);
+    }
+    if (status === "success") {
+      console.log("successfully minted");
+      // do the dispatch here!!!
+      dispatch({
+        type: "projectItemChanged",
+        id: item.id,
+        item: item,
+        userUpdateFunction: updateUser,
+      });
+      //todo: set claim condition
+      navigate("/book/publishing-done/" + projectIndex + "/" + itemIndex);
+    }
+  }, [status, navigate, projectIndex, itemIndex]);
 
   return (
     <>
@@ -310,7 +258,7 @@ function PreviewBookDetail({ projectIndex, itemIndex }) {
             {item.interactiveURL && (
               <iframe
                 allowFullScreen
-                className="flex-col justify-start items-center gap-4 w-full min-h-96 inline-flex"
+                className="rounded-lg flex-col justify-start items-center gap-4 w-full min-h-96 inline-flex"
                 src={`https://ipfs.nftbookbazaar.com/ipfs/${item.interactiveURL}`}
               />
             )}
@@ -324,7 +272,7 @@ function PreviewBookDetail({ projectIndex, itemIndex }) {
                     <div className="self-stretch pb-3 rounded-lg flex-col justify-start items-start gap-1 flex">
                       <div className="self-stretch justify-start items-start gap-2.5 inline-flex">
                         <div className="text-neutral-500 text-sm font-normal font-['DM Sans'] leading-tight">
-                          Encrypted Book file
+                          Encrypted Book ID
                         </div>
                       </div>
                       <div className="self-stretch justify-start items-center gap-1 inline-flex">
@@ -368,8 +316,32 @@ function PreviewBookDetail({ projectIndex, itemIndex }) {
                       </div>
                       <div className="self-stretch grow shrink basis-0 justify-start items-start gap-1 inline-flex">
                         <div className="grow shrink basis-0 justify-start items-center gap-2.5 flex">
-                          <div className="text-neutral-800 text-base font-normal font-['DM Sans'] leading-snug">
+                          <div className="flex-nowrap text-neutral-800 text-base font-normal font-['DM Sans'] leading-snug">
                             {item.description}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="self-stretch grow shrink basis-0 justify-start items-start gap-1 inline-flex">
+                        <div className="grow shrink basis-0 justify-start items-center gap-2.5 flex">
+                          <div className="text-neutral-800 text-base font-normal font-['DM Sans'] leading-snug pt-8">
+                            <p>
+                              <span className="text-zinc-600 text-sm font-normal font-['DM Sans'] leading-tight">
+                                Type:
+                              </span>{" "}
+                              {item.type}
+                            </p>
+                            <p>
+                              <span className="text-zinc-600 text-sm font-normal font-['DM Sans'] leading-tight">
+                                Genre:
+                              </span>{" "}
+                              {item.genre}
+                            </p>
+                            <p>
+                              <span className="text-zinc-600 text-sm font-normal font-['DM Sans'] leading-tight">
+                                Tags:
+                              </span>{" "}
+                              {item.tags}
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -382,37 +354,19 @@ function PreviewBookDetail({ projectIndex, itemIndex }) {
                   </div>
                   <div className="self-stretch rounded-lg flex-col justify-start items-start gap-1 flex">
                     <div className="self-stretch pr-2 pb-3 rounded-lg flex-col justify-start items-start gap-1 flex">
-                      <div className="self-stretch justify-start items-start gap-2.5 inline-flex">
-                        <div className="text-zinc-600 text-sm font-normal font-['DM Sans'] leading-tight">
-                          Supply
-                        </div>
-                      </div>
                       <div className="self-stretch justify-start items-start gap-1 inline-flex">
                         <div className="grow shrink basis-0 justify-start items-center gap-2.5 flex">
                           <div className="text-neutral-800 text-base font-normal font-['DM Sans'] leading-snug">
-                            20
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="self-stretch rounded-lg flex-col justify-start items-start gap-1 flex">
-                    <div className="self-stretch pr-2 pb-3 rounded-lg flex-col justify-start items-start gap-1 flex">
-                      <div className="self-stretch justify-start items-start gap-2.5 inline-flex">
-                        <div className="text-zinc-600 text-sm font-normal font-['DM Sans'] leading-tight">
-                          Details
-                        </div>
-                      </div>
-                      <div className="self-stretch justify-start items-start gap-1 inline-flex">
-                        <div className="grow shrink basis-0 justify-start items-center gap-2.5 flex">
-                          <div className="text-neutral-800 text-base font-normal font-['DM Sans'] leading-snug">
-                            Network: Polygon
+                            <strong>Supply:</strong> {item.supply}
                             <br />
-                            Preview Pages: {item.previewPages}
+                            <strong>Network:</strong> Polygon
                             <br />
-                            Total Pages: {item.pages}
+                            <strong>Preview Pages:</strong> {item.previewPages}{" "}
+                            of {item.pages}
                             <br />
-                            Claim: No whitelist
+                            <strong>Claim:</strong> $
+                            {item && item.contracts && item.contracts[0].price}{" "}
+                            USD (Public)
                           </div>
                         </div>
                       </div>
@@ -434,13 +388,15 @@ function PreviewBookDetail({ projectIndex, itemIndex }) {
                   <button
                     onClick={useHandlePublish}
                     className="text-neutral-50 text-center text-base font-bold font-['DM Sans'] leading-snug
-                                        px-8 py-3 bg-dao-primary rounded-lg w-full"
+                                        px-8 py-3 bg-dao-primary rounded-lg w-full cursor-pointer"
                     disabled={isLoading || isPending}
                   >
                     {isPending
                       ? "Confirming..."
                       : isLoading
                       ? "..."
+                      : status === "success"
+                      ? "Published!"
                       : "Publish Now"}
                   </button>
                 </div>
