@@ -88,7 +88,7 @@ function ItemView() {
               {
                 internalType: "bytes32[]",
                 name: "proof",
-                type: "bytes32[]",
+                type: "bytes32",
               },
               {
                 internalType: "uint256",
@@ -230,7 +230,7 @@ function ItemView() {
                   USDCPolygonAddress,
                   item.contracts[0].price * 1000000,
                   [
-                    Array.from(hexToBytes("", { size: 32 })),
+                    toHex("", { size: 32 }),
                     1,
                     item.contracts[0].price * 1000000,
                     USDCPolygonAddress,
