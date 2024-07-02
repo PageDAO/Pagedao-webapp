@@ -80,7 +80,7 @@ const createLazyMintParams = (amount, baseURIForTokens, data) => {
 };
 
 function PreviewBookDetail({ projectIndex, itemIndex }) {
-  const { primaryWallet } = useDynamicContext();
+  const { user, primaryWallet } = useDynamicContext();
   const { updateUser } = useUserUpdateRequest();
 
   const projects = useContext(TasksContext);
@@ -165,7 +165,19 @@ function PreviewBookDetail({ projectIndex, itemIndex }) {
         });
     };
     function generateSalt(projects, projectIndex, itemIndex) {
+      function stringToHash(string) {
+        let hash = 0;
+
+        if (string.length === 0) return hash;
+
+        for (const char of string) {
+          hash ^= char.charCodeAt(0); // Bitwise XOR operation
+        }
+
+        return hash;
+      }
       return (
+        stringToHash(user.userId)*100000 +
         projects[projectIndex].id * 5000 +
         projects[projectIndex].items[itemIndex].id
       );
