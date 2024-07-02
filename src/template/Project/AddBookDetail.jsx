@@ -22,8 +22,13 @@ import {
 } from "../Providers/TasksContext.js";
 import * as Toast from "@radix-ui/react-toast";
 import Select from "react-select";
+import ReactWindowedSelect from "react-windowed-dropdown";
 import { createThirdwebClient } from "thirdweb";
 import { upload } from "thirdweb/storage";
+
+const genreOptions = genreTags.map((item) => {
+  return { value: item, label: item };
+})
 
 function AddBookDetail({ projectIndex, itemIndex }) {
   const { isAuthenticated, user } = useDynamicContext();
@@ -339,7 +344,7 @@ function AddBookDetail({ projectIndex, itemIndex }) {
       interactiveURL: htmlURI,
       previewPages: previewPages,
       pages: pageCount,
-      genre: genre.join(", "),
+      genre: genre.map((option) => option.value).join(", "),
       tags: tags.map((option) => option.value).join(", "),
       type: itemType,
       dateCreated: new Date().toISOString(),
@@ -364,12 +369,14 @@ function AddBookDetail({ projectIndex, itemIndex }) {
   };
 
   const handleGenreChange = (selectedOption) => {
-    setGenre(selectedOption.map((option) => option.value));
+    setGenre(selectedOption);
+    if (itemIndex) projects[projectIndex].items[itemIndex].genre = selectedOption.map((option) => option.value).join(", ");
     setIsModified(true);
   };
 
   const handleTagsChange = (selectedOption) => {
     setTags(selectedOption);
+    if (itemIndex) projects[projectIndex].items[itemIndex].tags = selectedOption.map((option) => option.value).join(", ");
     setIsModified(true);
   };
 
@@ -725,6 +732,26 @@ function AddBookDetail({ projectIndex, itemIndex }) {
                         <div className="grow shrink basis-0 justify-start items-center gap-2.5 flex">
                           Genre
                           <br />
+                          <div className="w-full">
+                          <ReactWindowedSelect
+                            className="w-full"
+                            isMulti
+                            labelFilter={'includes'}
+                            value={
+                              itemIndex
+                                ? 
+                                (projects[projectIndex].items[itemIndex].genre.length==0?null:projects[projectIndex].items[itemIndex].genre
+                                    .split(", ")
+                                    .map((item) =>{
+                                      return { value: item, label: item };
+                                    })
+                                  ) : genre
+                            }
+                            onChange={handleGenreChange}
+                            options={genreOptions}
+                            />
+                            </div>
+                          {/*
                           <Select
                             className="w-full"
                             isMulti
@@ -742,6 +769,7 @@ function AddBookDetail({ projectIndex, itemIndex }) {
                               return { value: item, label: item };
                             })}
                           />
+                          */}
                         </div>
                       </div>
                       <div className="self-stretch grow shrink basis-0 justify-start items-start gap-1 inline-flex">
@@ -753,12 +781,12 @@ function AddBookDetail({ projectIndex, itemIndex }) {
                             isMulti
                             value={
                               itemIndex
-                                ? projects[projectIndex].items[itemIndex].tags
+                                ? (projects[projectIndex].items[itemIndex].tags.length==0?null:projects[projectIndex].items[itemIndex].tags
                                     .split(", ")
                                     .map((item) => {
                                       return { value: item, label: item };
                                     })
-                                : tags
+                                  ): tags
                             }
                             onChange={handleTagsChange}
                             options={descriptorTags.map((itemtype) => {
