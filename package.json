@@ -46,7 +46,6 @@
     "react-router-dom": "^6.22.2",
     "react-select": "^5.8.0",
     "react-window": "^1.8.10",
-    "react-windowed-dropdown": "^1.0.3",
     "recoil": "^0.7.7",
     "secp256k1": "^5.0.0",
     "secretjs": "^1.12.5",

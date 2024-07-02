@@ -22,7 +22,7 @@ import {
 } from "../Providers/TasksContext.js";
 import * as Toast from "@radix-ui/react-toast";
 import Select from "react-select";
-import ReactWindowedSelect from "react-windowed-dropdown";
+import ReactWindowedSelect from "../../components/ReactWindowedSelect";
 import { createThirdwebClient } from "thirdweb";
 import { upload } from "thirdweb/storage";
 
