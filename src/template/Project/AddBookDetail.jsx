@@ -23,12 +23,15 @@ import {
 import * as Toast from "@radix-ui/react-toast";
 import Select from "react-select";
 import ReactWindowedSelect from "../../components/ReactWindowedSelect";
+import ItemCreationModal from "./ItemCreationModal";
 import { createThirdwebClient } from "thirdweb";
 import { upload } from "thirdweb/storage";
+import * as Dialog from "@radix-ui/react-dialog";
+import * as Progress from "@radix-ui/react-progress";
 
 const genreOptions = genreTags.map((item) => {
   return { value: item, label: item };
-})
+});
 
 function AddBookDetail({ projectIndex, itemIndex }) {
   const { isAuthenticated, user } = useDynamicContext();
@@ -50,6 +53,8 @@ function AddBookDetail({ projectIndex, itemIndex }) {
   const [pdfData, setPdfData] = useState(null);
   const [filename, setFilename] = useState("");
   const [open, setOpen] = useState(false);
+  const [openProgress, setOpenProgress] = useState(false);
+  const [progressMsg, setProgressMsg] = useState({ message: "", value: 0 });
   const [toastMessage, setToastMessage] = useState("");
   const timerRef = useRef(0);
   const dispatch = useContext(TasksDispatchContext);
@@ -162,16 +167,17 @@ function AddBookDetail({ projectIndex, itemIndex }) {
   };
 
   async function saveDraftAndReturn() {
+    setOpenProgress(true);
     const result = await saveDraft();
     console.log(result);
-    //if (result) navigate("/project/" + projectIndex);
+    if (result) navigate("/project/" + projectIndex);
   }
 
   const validateForm = () => {
     // check if it's already saved
     // todo: check all the form values and return false if any are missing
     let message = "";
-
+    setOpenProgress(true);
     if (!isModified) {
       message += "No changes to save. ";
     }
@@ -204,9 +210,6 @@ function AddBookDetail({ projectIndex, itemIndex }) {
 
   async function saveDraft() {
     if (!validateForm()) return false;
-
-    console.log("trying to save draft");
-    // todo: fix this for modifying items this only works if the itemIndex is not set
     const projectItem = await createProjectItem();
     if (!itemIndex) {
       dispatch({
@@ -229,6 +232,16 @@ function AddBookDetail({ projectIndex, itemIndex }) {
   }
 
   const createProjectItem = async () => {
+    /* ProgressMsg Steps 
+Uploading cover image
+Creating viewable PDF
+Encrypting original content
+Saving metadata
+Finalizing files
+Updating project
+*/
+    setProgressMsg({ message: "Uploading cover image", value: 20 });
+
     const coverImageFile =
       changes.coverImage || !itemIndex
         ? new File(
@@ -242,7 +255,7 @@ function AddBookDetail({ projectIndex, itemIndex }) {
         : projects[projectIndex].items[itemIndex].image;
 
     // todo: do detection on filetype and add character
-
+    setProgressMsg({ message: "Creating viewable PDF", value: 40 });
     const { modifiedPDF, pageCount, previewPages } =
       changes.pdfData || !itemIndex
         ? await modifyPdf(pdfData, coverImage, percentagePreview)
@@ -256,11 +269,13 @@ function AddBookDetail({ projectIndex, itemIndex }) {
         ? await uploadToAPI(new File([modifiedPDF], "modifiedPDF"))
         : projects[projectIndex].items[itemIndex].pdf;
 
+    setProgressMsg({ message: "Encrypting original content", value: 60 });
     const encryptedDocid =
       changes.pdfData || !itemIndex
         ? await encryptPdf(pdfData)
         : projects[projectIndex].items[itemIndex].encryptedfile;
 
+    setProgressMsg({ message: "Saving metadata", value: 80 });
     // background image is a gradient designed to make it easier to read
     const options = {
       title: bookName,
@@ -328,8 +343,7 @@ function AddBookDetail({ projectIndex, itemIndex }) {
       "contract.json"
     );
     */
-
-    // definitely figure out this id thing for items!
+    setProgressMsg({ message: "Finalizing files", value: 90 });
     const projectItem = {
       id: projects[projectIndex].nextItemID,
       name: bookName,
@@ -363,6 +377,9 @@ function AddBookDetail({ projectIndex, itemIndex }) {
       status: "Draft",
     };
 
+    setProgressMsg({ message: "Updating project", value: 100 });
+    setOpenProgress(false);
+
     console.log("projectItem", projectItem);
 
     return projectItem;
@@ -370,13 +387,19 @@ function AddBookDetail({ projectIndex, itemIndex }) {
 
   const handleGenreChange = (selectedOption) => {
     setGenre(selectedOption);
-    if (itemIndex) projects[projectIndex].items[itemIndex].genre = selectedOption.map((option) => option.value).join(", ");
+    if (itemIndex)
+      projects[projectIndex].items[itemIndex].genre = selectedOption
+        .map((option) => option.value)
+        .join(", ");
     setIsModified(true);
   };
 
   const handleTagsChange = (selectedOption) => {
     setTags(selectedOption);
-    if (itemIndex) projects[projectIndex].items[itemIndex].tags = selectedOption.map((option) => option.value).join(", ");
+    if (itemIndex)
+      projects[projectIndex].items[itemIndex].tags = selectedOption
+        .map((option) => option.value)
+        .join(", ");
     setIsModified(true);
   };
 
@@ -733,24 +756,28 @@ function AddBookDetail({ projectIndex, itemIndex }) {
                           Genre
                           <br />
                           <div className="w-full">
-                          <ReactWindowedSelect
-                            className="w-full"
-                            isMulti
-                            labelFilter={'includes'}
-                            value={
-                              itemIndex
-                                ? 
-                                (projects[projectIndex].items[itemIndex].genre.length==0?null:projects[projectIndex].items[itemIndex].genre
-                                    .split(", ")
-                                    .map((item) =>{
-                                      return { value: item, label: item };
-                                    })
-                                  ) : genre
-                            }
-                            onChange={handleGenreChange}
-                            options={genreOptions}
+                            <ReactWindowedSelect
+                              className="w-full"
+                              isMulti
+                              labelFilter={"includes"}
+                              value={
+                                itemIndex
+                                  ? projects[projectIndex].items[itemIndex]
+                                      .genre.length == 0
+                                    ? null
+                                    : projects[projectIndex].items[
+                                        itemIndex
+                                      ].genre
+                                        .split(", ")
+                                        .map((item) => {
+                                          return { value: item, label: item };
+                                        })
+                                  : genre
+                              }
+                              onChange={handleGenreChange}
+                              options={genreOptions}
                             />
-                            </div>
+                          </div>
                           {/*
                           <Select
                             className="w-full"
@@ -781,12 +808,15 @@ function AddBookDetail({ projectIndex, itemIndex }) {
                             isMulti
                             value={
                               itemIndex
-                                ? (projects[projectIndex].items[itemIndex].tags.length==0?null:projects[projectIndex].items[itemIndex].tags
-                                    .split(", ")
-                                    .map((item) => {
-                                      return { value: item, label: item };
-                                    })
-                                  ): tags
+                                ? projects[projectIndex].items[itemIndex].tags
+                                    .length == 0
+                                  ? null
+                                  : projects[projectIndex].items[itemIndex].tags
+                                      .split(", ")
+                                      .map((item) => {
+                                        return { value: item, label: item };
+                                      })
+                                : tags
                             }
                             onChange={handleTagsChange}
                             options={descriptorTags.map((itemtype) => {
@@ -894,7 +924,7 @@ function AddBookDetail({ projectIndex, itemIndex }) {
               </div>
               {itemIndex &&
               projects &&
-              projects[projectIndex] && 
+              projects[projectIndex] &&
               projects[projectIndex].items[itemIndex] &&
               projects[projectIndex].items[itemIndex].contracts[0]
                 .contractAddress ? (
@@ -937,7 +967,11 @@ function AddBookDetail({ projectIndex, itemIndex }) {
               )}
             </div>
           </div>
-
+          <ItemCreationModal
+            modalIsOpen={openProgress}
+            setIsOpen={setOpenProgress}
+            stepProgress={progressMsg}
+          />
           {/* Publishing Settings */}
           <div className="basis-1/4 w-full">
             <div className="p-6 flex-col justify-start items-start gap-6 inline-flex">

@@ -169,10 +169,11 @@ function ItemView() {
     if (account && account.address)
       sendTx(claimTo({ contract: contract, to: account.address, quantity: 1 }));
   }, [account, contract, sendTx]);
+/*  
   React.useEffect(() => {
     return () => clearTimeout(timerRef.current);
   }, []);
-
+*/
   //todo: query the user's projects and items from the backend - use a reducer?
 
   function openModal() {

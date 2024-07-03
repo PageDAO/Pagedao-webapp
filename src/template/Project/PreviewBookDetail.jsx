@@ -413,7 +413,6 @@ function PreviewBookDetail({ projectIndex, itemIndex }) {
                   </button>
                 </div>
               </div>
-              {status} {JSON.stringify(failureReason)}
             </div>
           </div>
         </div>

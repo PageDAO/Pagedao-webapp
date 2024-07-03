@@ -27,6 +27,7 @@ function AddBook() {
         <>
           <Header
             title={projects[params.projectIndex].title}
+            projectIndex={params.projectIndex}
             breadcrumb="Back"
             breadcrumbLink={{ pathname: `/project/${params.projectIndex}` }}
           />

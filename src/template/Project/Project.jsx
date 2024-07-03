@@ -28,7 +28,7 @@ function Project() {
       <TopNav />
       {!isLoading ? (
         <>
-      <Header title={projects[projectIndex].title} breadcrumb="My Books" />
+      <Header title={projects[projectIndex].title} projectIndex={projectIndex} breadcrumb="My Books" />
       <ProjectDetail projectIndex={projectIndex}/>
       </>
       ):("Loading...")}
