@@ -12,6 +12,7 @@ import { TasksContext, TasksDispatchContext } from "../Providers/TasksContext";
 import { setClaimConditions } from "thirdweb/extensions/erc721";
 import { createThirdwebClient, getContract } from "thirdweb";
 import { polygon } from "thirdweb/chains";
+import ItemCreationModal from "./ItemCreationModal";
 
 const USDCPolygonAddress = "0x3c499c542cef5e3811e1192ce70d8cc03d5c3359";
 
@@ -29,7 +30,7 @@ const createClaimParams = (
         maxClaimableSupply: maxClaimableSupply,
         maxClaimablePerWallet: maxClaimableSupply,
         currencyAddress: currency,
-        price: pricePerToken,
+        price: pricePerToken*10**6,
         startTime: new Date(),
       },
     ],
@@ -95,6 +96,7 @@ function PreviewBookDetail({ projectIndex, itemIndex }) {
   const [contractCreated, setContractCreated] = useState(false);
   const [contractAddress, setContractAddress] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isMinting, setIsMinting] = useState(false);
   const [project, setProject] = useState({});
   const [item, setItem] = useState({});
   const navigate = useNavigate();
@@ -104,66 +106,80 @@ function PreviewBookDetail({ projectIndex, itemIndex }) {
     clientId: import.meta.env.VITE_APP_THIRDWEB_CLIENT_ID,
   });
 
-  // todo: do checks for created contracts (and related chains)
-  // add a contracts object on the project object projects.contracts = { chainID, contractAddress, creationDate, creatorAddress, network }
-  async function useHandlePublish() {
-    const CreateNFT = () => {
-      if (!contractAddress) return;
+  const [openProgress, setOpenProgress] = useState(false);
+  const [progressMsg, setProgressMsg] = useState({
+    message: "Publishing your book...",
+    value: 0,
+  });
 
-      console.log("publishing:", contractAddress);
-      const contract = getContract({
-        client: client,
-        chain: polygon,
-        address: contractAddress,
-      });
+  const CreateNFT = () => {
+    if (!(contractAddress && isMinting)) return;
 
-      const multiCallAbi = [
+    setIsMinting(false);
+
+    console.log("publishing:", contractAddress);
+    const contract = getContract({
+      client: client,
+      chain: polygon,
+      address: contractAddress,
+    });
+
+    const multiCallAbi = [
+      {
+        type: "function",
+        name: "multicall",
+        inputs: [{ type: "bytes[]", name: "data" }],
+        outputs: [{ type: "bytes[]", name: "results" }],
+        stateMutability: "nonpayable",
+      },
+    ];
+
+    const maxClaimableSupply = item.supply;
+    const pricePerToken = item.contracts[0].price;
+    const currency = USDCPolygonAddress;
+    const metadataURI =
+      "https://ipfs.nftbookbazaar.com/ipfs/" + item.itemMetadataURI + "?";
+
+    setProgressMsg({ message: "Creating claim conditions...", value: 50 });
+    setClaimConditions({
+      contract,
+      phases: [
         {
-          type: "function",
-          name: "multicall",
-          inputs: [{ type: "bytes[]", name: "data" }],
-          outputs: [{ type: "bytes[]", name: "results" }],
-          stateMutability: "nonpayable",
+          maxClaimableSupply: maxClaimableSupply,
+          maxClaimablePerWallet: maxClaimableSupply,
+          currencyAddress: currency,
+          price: pricePerToken*100,
+          startTime: new Date(),
         },
-      ];
+      ],
+    })
+      .data()
+      .then((data) => {
+        const mintParams = createLazyMintParams(item.supply, metadataURI, "0x");
 
-      const maxClaimableSupply = item.supply;
-      const pricePerToken = item.contracts[0].price;
-      const currency = USDCPolygonAddress;
-      const metadataURI =
-        "https://ipfs.nftbookbazaar.com/ipfs/" + item.itemMetadataURI + "?";
-
-      setClaimConditions({
-        contract,
-        phases: [
-          {
-            maxClaimableSupply: maxClaimableSupply,
-            maxClaimablePerWallet: maxClaimableSupply,
-            currencyAddress: currency,
-            price: pricePerToken,
-            startTime: new Date(),
-          },
-        ],
-      })
-        .data()
-        .then((data) => {
-          const mintParams = createLazyMintParams(
-            item.supply,
-            metadataURI,
-            "0x"
-          );
-
-          console.log("calling multicall", data, mintParams);
-          const multicallResult = writeContract({
-            address: contractAddress,
-            abi: multiCallAbi,
-            functionName: "multicall",
-            args: [[data, mintParams]],
-          });
-
-          return multicallResult;
+        setProgressMsg({
+          message:
+            "Minting NFT (check your wallet and confirm transaction )...",
+          value: 75,
         });
-    };
+        console.log("calling multicall", data, mintParams);
+        const multicallResult = writeContract({
+          address: contractAddress,
+          abi: multiCallAbi,
+          functionName: "multicall",
+          args: [[data, mintParams]],
+        });
+        return multicallResult;
+      });
+  };
+
+  async function useHandlePublish() {
+    setOpenProgress(true);
+    setProgressMsg({
+      message: "Preparing your book for publishing...",
+      value: 0,
+    });
+
     function generateSalt(projects, projectIndex, itemIndex) {
       function stringToHash(string) {
         let hash = 0;
@@ -177,13 +193,14 @@ function PreviewBookDetail({ projectIndex, itemIndex }) {
         return hash;
       }
       return (
-        stringToHash(user.userId)*100000 +
+        stringToHash(user.userId) * 100000 +
         projects[projectIndex].id * 5000 +
         projects[projectIndex].items[itemIndex].id
       );
     }
-    //todo: this should show a modal or switch page or something
+
     if (!contractCreated) {
+      setProgressMsg({ message: "Creating your book contract...", value: 10 });
       axios
         .post(`${import.meta.env.VITE_APP_BACKEND_API_URL}/deploy`, {
           project: project,
@@ -203,18 +220,73 @@ function PreviewBookDetail({ projectIndex, itemIndex }) {
               item: item,
               userUpdateFunction: updateUser,
             });
-
-            CreateNFT();
+            setIsMinting(true);
+            const contract = getContract({
+              client: client,
+              chain: polygon,
+              address: contractAddress,
+            });
+        
+            const multiCallAbi = [
+              {
+                type: "function",
+                name: "multicall",
+                inputs: [{ type: "bytes[]", name: "data" }],
+                outputs: [{ type: "bytes[]", name: "results" }],
+                stateMutability: "nonpayable",
+              },
+            ];
+        
+            const maxClaimableSupply = item.supply;
+            const pricePerToken = item.contracts[0].price;
+            const currency = USDCPolygonAddress;
+            const metadataURI =
+              "https://ipfs.nftbookbazaar.com/ipfs/" + item.itemMetadataURI + "?";
+        
+            setProgressMsg({ message: "Creating claim conditions...", value: 50 });
+            setClaimConditions({
+              contract,
+              phases: [
+                {
+                  maxClaimableSupply: maxClaimableSupply,
+                  maxClaimablePerWallet: maxClaimableSupply,
+                  currencyAddress: currency,
+                  price: pricePerToken,
+                  startTime: new Date(),
+                },
+              ],
+            })
+              .data()
+              .then((data) => {
+                const mintParams = createLazyMintParams(item.supply, metadataURI, "0x");
+        
+                setProgressMsg({
+                  message:
+                    "Minting NFT (check your wallet and confirm transaction )...",
+                  value: 75,
+                });
+                console.log("calling multicall", data, mintParams);
+                const multicallResult = writeContract({
+                  address: contractAddress,
+                  abi: multiCallAbi,
+                  functionName: "multicall",
+                  args: [[data, mintParams]],
+                });
+                return multicallResult;
+              });
+        
           }
-          // todo: save the contract address and published status to the project using the tasksdispatchcontext
         });
     } else {
       console.log(
         "contract created... trying to mint the nft and set claim conditions"
       );
+      setIsMinting(true);
       CreateNFT();
     }
   }
+
+ // useMemo(CreateNFT, [isMinting]);
 
   useEffect(() => {
     if (
@@ -237,7 +309,7 @@ function PreviewBookDetail({ projectIndex, itemIndex }) {
     }
   }, [projects, primaryWallet, project, projectIndex, itemIndex, item]);
 
-  useEffect(() => {
+  useMemo(() => {
     if (status === "error") {
       console.log("error minting:", failureReason);
     }
@@ -250,10 +322,9 @@ function PreviewBookDetail({ projectIndex, itemIndex }) {
         item: item,
         userUpdateFunction: updateUser,
       });
-      //todo: set claim condition
       navigate("/book/publishing-done/" + projectIndex + "/" + itemIndex);
     }
-  }, [status, navigate, projectIndex, itemIndex]);
+  }, [status, projectIndex, itemIndex]);
 
   return (
     <>
@@ -386,6 +457,11 @@ function PreviewBookDetail({ projectIndex, itemIndex }) {
                   </div>
                 </div>
               </div>
+              <ItemCreationModal
+                modalIsOpen={openProgress}
+                setIsOpen={setOpenProgress}
+                stepProgress={progressMsg}
+              />
               <div className="self-stretch justify-start items-start gap-4 inline-flex">
                 <div className="justify-center items-center gap-1 flex">
                   <Link

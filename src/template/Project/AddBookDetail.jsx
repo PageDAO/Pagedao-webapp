@@ -1,4 +1,4 @@
-import { useState, useRef, useContext, useEffect } from "react";
+import { useState, useRef, useContext, useEffect, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Percent, UploadCloud } from "lucide-react";
 import { degrees, PDFDocument, rgb, StandardFonts } from "pdf-lib";
@@ -7,7 +7,7 @@ import {
   useUserUpdateRequest,
 } from "@dynamic-labs/sdk-react-core";
 import {
-  generateBookFromTemplate,
+  generatePDFBookFromTemplate,
   pinToIPFS,
   encryptAndStoreItem,
   fetchMetadata,
@@ -40,6 +40,7 @@ function AddBookDetail({ projectIndex, itemIndex }) {
   const [isModified, setIsModified] = useState(false);
   const [changes, setChanges] = useState({ coverImage: false, pdfData: false });
   const [coverImage, setCoverImage] = useState();
+  const [coverImageType, setCoverImageType] = useState("");
   const [isHovering, setIsHovering] = useState(false);
   const [allowPreview, setAllowPreview] = useState(false);
   const [percentagePreview, setPercentagePreview] = useState(10);
@@ -63,10 +64,12 @@ function AddBookDetail({ projectIndex, itemIndex }) {
     clientId: import.meta.env.VITE_APP_THIRDWEB_CLIENT_ID,
   });
 
-  useEffect(() => {
+  useMemo(() => {
     // prepopulate things if itemindex is provided
     if (itemIndex) {
       setCoverImage(
+        projects[projectIndex].items[itemIndex].image.startsWith("https://")?
+        projects[projectIndex].items[itemIndex].image:
         "https://ipfs.nftbookbazaar.com/ipfs/" +
           projects[projectIndex].items[itemIndex].image
       );
@@ -114,18 +117,33 @@ function AddBookDetail({ projectIndex, itemIndex }) {
   }
 
   // todo: load form values if the itemIndex is not null
-  const handleImageUpload = (event) => {
+  const handleImageUpload = async (event) => {
     const file = event.target.files[0];
+    console.log("file", file);
     if (file && file.type.startsWith("image/")) {
+      showToastMessage("Uploading cover image");
+      const ipfsURI = await upload({ client: client, files: [file] });
+
+      const uri = "https://f249a59bdff8d2da0eb19725b90c6904.ipfscdn.io/ipfs/" + ipfsURI.substring(7);
+      setCoverImage(uri);
+      setCoverImageType(file.type);
+      console.log("set the cover image", uri);
+      setChanges({ pdfData: changes.pdfData, coverImage: true });
+      setIsHovering(false);
+      setIsModified(true);
+
+      /*
       const reader = new FileReader();
       reader.onloadend = () => {
         // Update the status with this new image URL
         setCoverImage(reader.result);
+        console.log("set the cover image", reader);
         setChanges({ pdfData: changes.pdfData, coverImage: true });
         setIsHovering(false);
         setIsModified(true);
       };
       reader.readAsDataURL(file);
+      */
     }
   };
 
@@ -232,16 +250,9 @@ function AddBookDetail({ projectIndex, itemIndex }) {
   }
 
   const createProjectItem = async () => {
-    /* ProgressMsg Steps 
-Uploading cover image
-Creating viewable PDF
-Encrypting original content
-Saving metadata
-Finalizing files
-Updating project
-*/
-    setProgressMsg({ message: "Uploading cover image", value: 20 });
 
+    setProgressMsg({ message: "Saving cover image", value: 20 });
+/*
     const coverImageFile =
       changes.coverImage || !itemIndex
         ? new File(
@@ -253,6 +264,8 @@ Updating project
       changes.coverImage || !itemIndex
         ? await uploadToAPI(new File([coverImageFile], coverImageFile.name))
         : projects[projectIndex].items[itemIndex].image;
+*/
+    const coverImageURI = coverImage;
 
     // todo: do detection on filetype and add character
     setProgressMsg({ message: "Creating viewable PDF", value: 40 });
@@ -288,20 +301,21 @@ Updating project
       baseHref: "/ipfs/QmdpqLgSWdfFHExp4c9ARUtPxExxRrsoAT8Ume2RMjmgkQ/",
     };
 
-    const html = Buffer.from(generateBookFromTemplate(options), "utf8");
+    const html = Buffer.from(generatePDFBookFromTemplate(options), "utf8");
     const htmlURI = await uploadToAPI(html, "index.html");
 
+    const suggestedItemId = itemIndex?projects[projectIndex].items[itemIndex].id:projects[projectIndex].nextItemID;
     // todo: add tags, genre, and type as attributes
     const itemMetadata = {
       name: bookName,
       description: description,
-      image: "https://ipfs.nftbookbazaar.com/" + coverImageURI,
-      external_link: "https://ipfs.nftbookbazaar.com/" + htmlURI,
-      animation_url: "https://ipfs.nftbookbazaar.com/" + htmlURI,
+      image: coverImageURI,
+      external_link: "https://pagedao-v2.netlify.app/book/" + user.userId + "/" + projects[projectIndex].id + "/" + suggestedItemId,
+      animation_url: "https://ipfs.nftbookbazaar.com/ipfs/" + htmlURI,
       attributes: [
         { trait_type: "Type", value: itemType },
-        ...tags.map((tag) => ({ trait_type: "Tag", value: tag })),
-        ...genre.map((tag) => ({ trait_type: "Genre", value: tag })),
+        ...tags.map((tag) => ({ trait_type: "Tag", value: tag.value })),
+        ...genre.map((genre) => ({ trait_type: "Genre", value: genre.value })),
         { trait_type: "Pages", value: pageCount },
         { trait_type: "Author", value: user.username },
         {
@@ -345,7 +359,7 @@ Updating project
     */
     setProgressMsg({ message: "Finalizing files", value: 90 });
     const projectItem = {
-      id: projects[projectIndex].nextItemID,
+      id: suggestedItemId,
       name: bookName,
       description: description,
       image: coverImageURI,
@@ -453,7 +467,7 @@ Updating project
 
   const modifyPdf = async function (pdfData, coverImage, percentagePreview) {
     const existingPdfBytes = pdfData; //await fetch(pdfURL).then((res) =>res.arrayBuffer());
-    const coverImageType = coverImage.match(/[^:/]\w+(?=;|,)/)[0];
+    const coverType = coverImageType.substring("image/".length); //coverImage.match(/[^:/]\w+(?=;|,)/)[0];
     const coverImageBytes = await fetch(coverImage).then((res) =>
       res.arrayBuffer()
     );
@@ -471,7 +485,7 @@ Updating project
     var cover;
 
     //embed the image
-    if (coverImageType == "png") {
+    if (coverType == "png") {
       cover = await pdfDoc.embedPng(coverImageBytes);
     } else {
       cover = await pdfDoc.embedJpg(coverImageBytes);
@@ -576,11 +590,6 @@ Updating project
   const pdfBytes = await pdfDoc.save();
 })();
   */
-
-  // default base href for code: https://ipfs.nftbookbazaar.com/ipfs/QmdpqLgSWdfFHExp4c9ARUtPxExxRrsoAT8Ume2RMjmgkQ/ < shorten to relative link
-  // default backgroundImage https://ipfs.nftbookbazaar.com/ipfs/QmbB68XY3Vm761dNNpLZCSzKL8ZS5F5sV7mUhxgfxgNuVi",
-  //title, image, authorTwitter, purchaseURL, pdfURL, description, backgroundImage, baseHref
-  // const generateFlipbookHTML = (options) => {
 
   return (
     <>

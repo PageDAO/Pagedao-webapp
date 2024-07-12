@@ -14,6 +14,7 @@ import Marketplace from './template/Marketplace/Marketplace.jsx';
 import EditAuthorInfo from './template/AuthorProfile/EditAuthorInfo.jsx';
 import ItemView from './template/Project/ItemView.jsx';
 import ProjectView from './template/Project/ProjectView.jsx';
+import Profile from './template/AuthorProfile/Profile.jsx';
 //import Profile from './portfolio/Profile.jsx';
 
 function App() {
@@ -27,6 +28,10 @@ function App() {
         {
             path: "/profile/:userId",
             element: <AuthorProfile/>
+        },
+        {
+            path: "/profile2/:userId",
+            element: <Profile/>
         },
         {
             path: "/editprofile/:userId",

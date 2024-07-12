@@ -1,4 +1,4 @@
-const generateBookFromTemplate = (options) => {
+const generatePDFBookFromTemplate = (options) => {
   /**
    * Accepts an options object with properties:
    * image
@@ -6,7 +6,13 @@ const generateBookFromTemplate = (options) => {
    * authorTwitter
    * purchaseURL
    * pdfURL
-   * title, image, authorTwitter, purchaseURL, pdfURL, description, backgroundImage, baseHref, openPage, isRTL, autoPlay, autoPlayStart, autoPlayDuration, isTransparent
+   * title, image, authorTwitter, 
+   * purchaseURL, pdfURL, 
+   * description, backgroundImage, 
+   * baseHref, openPage, 
+   * isRTL, autoPlay, 
+   * autoPlayStart, autoPlayDuration, 
+   * isTransparent, enableDownload, enablePrint
    * todo: add parameters for PDF Viewer
    */
   var outputString = `<!DOCTYPE html>
@@ -99,7 +105,7 @@ backgroundImage: "${options.backgroundImage}",
 backgroundColor: "#fff",
 controlsPosition: pdfflip.CONTROLSPOSITION.BOTTOM,
 allControls: "pageMode,thumbnail,play,startPage,altPrev,pageNumber,altNext,endPage,zoomIn,zoomOut,fullScreen,download,sound,share",
-hideControls: "sound,download",
+hideControls: "sound${options.enableDownload?'':', download'}",
 };
 
 var pdfflipLocation = "./pflip/";
@@ -113,4 +119,4 @@ var pdfflipLocation = "./pflip/";
   return outputString;
 };
 
-export {generateBookFromTemplate};
+export {generatePDFBookFromTemplate};

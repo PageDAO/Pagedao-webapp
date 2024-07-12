@@ -1,4 +1,4 @@
-import { generateBookFromTemplate } from "./generateBookFromTemplate";
+import { generatePDFBookFromTemplate } from "./generateBookFromTemplate";
 import { pinToIPFS } from "./pinToIPFS";
 import { ECDHEncryption } from "./ECDHEncryption";
 import { isDataURL, dataURItoBlob } from "./dataURI";
@@ -12,7 +12,7 @@ import {
 import { descriptorTags, genreTags, itemTypeTags } from "./tags";
 
 export {
-  generateBookFromTemplate,
+  generatePDFBookFromTemplate,
   pinToIPFS,
   ECDHEncryption,
   isDataURL,

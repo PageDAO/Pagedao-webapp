@@ -31,7 +31,7 @@ function PublishingDone() {
           </div>
           <div className="flex-col justify-end items-center gap-2 inline-flex">
             <div className="text-center text-neutral-50 text-xl font-bold font-['DM Sans'] leading-7">
-              Nice! Your {projects && projects[projectIndex] && projects[projectIndex].items[itemIndex] && projects[projectIndex].items[itemIndex].type} is now on the market.
+              Nice! Your {projects && projects[projectIndex] && projects[projectIndex].items[itemIndex] && projects[projectIndex].items[itemIndex].type?projects[projectIndex].items[itemIndex].type:"item"} is now on the market.
             </div>
             <div className="justify-center items-end gap-2 inline-flex">
               <div className="px-8 py-3 rounded-lg border border-neutral-800 justify-center items-center gap-1 flex">

@@ -1,33 +1,52 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import TopNav from "../Layout/TopNav.jsx";
 import Footer from "../Layout/Footer.jsx";
 import axios from "axios";
+import * as ethers from "ethers";
 import { Chat } from "@orbisclub/components";
 import "@orbisclub/components/dist/index.modern.css";
-import { parseAbi } from "viem";
 
+//todo: check wallet balance of usdc before allowing purchase
+//if they need usdc, pop up the pay modal to load up with the amount
+//try to hook into the callback of that completion (definitely possible)
+//then call approve on usdc for the nft contract address
+//then call the claim function on the nft contract address
 import * as Toast from "@radix-ui/react-toast";
 import {
-  PayEmbed,
-  TransactionButton,
-  useActiveAccount,
-  useSendAndConfirmTransaction,
-} from "thirdweb/react";
+  useDynamicContext,
+  getAuthToken,
+  DynamicConnectButton,
+} from "@dynamic-labs/sdk-react-core";
+import { parseAbi, toHex, encodeFunctionData, encodeAbiParameters } from "viem";
+import { polygon } from "viem/chains";
+import {
+  useDisconnect,
+  useSwitchChain,
+  useWalletClient,
+  useAccount,
+} from "wagmi";
+import { claimTo } from "thirdweb/extensions/erc721";
+import { viemAdapter } from "thirdweb/adapters/viem";
 import {
   createThirdwebClient,
-  prepareContractCall,
   getContract,
-  toHex,
-  hexToBytes,
+  prepareContractCall,
+  sendAndConfirmTransaction,
 } from "thirdweb";
-import { polygon } from "thirdweb/chains";
-import { claimTo } from "thirdweb/extensions/erc721";
-import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
+import {
+  useSetActiveWallet,
+  useActiveWallet,
+  useSendTransaction,
+  TransactionButton,
+} from "thirdweb/react";
+import { createWalletAdapter } from "thirdweb/wallets";
+import { polygon as twPolygon } from "thirdweb/chains";
+import {pdfjs, PDFViewer } from "@recogito/recogito-react-pdf";
 
-const client = createThirdwebClient({
-  clientId: import.meta.env.VITE_APP_THIRDWEB_CLIENT_ID,
-});
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.js',
+  import.meta.url);
 
 function ItemView() {
   const [modalIsOpen, setIsOpen] = React.useState(false);
@@ -36,91 +55,155 @@ function ItemView() {
   const timerRef = React.useRef(0);
   const [item, setItem] = React.useState(null);
   const [secretDocument, setSecretDocument] = React.useState(null);
-  const USDCPolygonAddress = "0x3c499c542cef5e3811e1192ce70d8cc03d5c3359";
+  const [docContents, setDocContents] = React.useState(null);
+  const USDCPolygonAddress = "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359";
 
-  const { mutate: sendTx, data: transactionResult } =
-    useSendAndConfirmTransaction({
-      payModal: {
-        supportedTokens: {
-          1: [
-            {
-              address: USDCPolygonAddress,
-              name: "USD Coin",
-              symbol: "USDC",
-            },
-          ],
-        },
-      },
-    });
   const { userId, projectId, itemId } = useParams();
-  const { user } = useDynamicContext();
+  const { user, primaryWallet } = useDynamicContext();
+  const dynamicJwtToken = getAuthToken();
 
-  const account = useActiveAccount();
-  const contract = getContract({
-    client,
-    chain: polygon,
-    address: item && item.contracts && item.contracts[0].contractAddress,
-    abi: [
-      {
-        inputs: [
-          {
-            internalType: "address",
-            name: "_receiver",
-            type: "address",
-          },
-          {
-            internalType: "uint256",
-            name: "_quantity",
-            type: "uint256",
-          },
-          {
-            internalType: "address",
-            name: "_currency",
-            type: "address",
-          },
-          {
-            internalType: "uint256",
-            name: "_pricePerToken",
-            type: "uint256",
-          },
-          {
-            components: [
-              {
-                internalType: "bytes32[]",
-                name: "proof",
-                type: "bytes32",
-              },
-              {
-                internalType: "uint256",
-                name: "quantityLimitPerWallet",
-                type: "uint256",
-              },
-              {
-                internalType: "uint256",
-                name: "pricePerToken",
-                type: "uint256",
-              },
-              {
-                internalType: "address",
-                name: "currency",
-                type: "address",
-              },
-            ],
-            internalType: "struct IDrop.AllowlistProof",
-            name: "_allowlistProof",
-            type: "tuple",
-          },
-          { internalType: "bytes", name: "_data", type: "bytes" },
-        ],
-        name: "claim",
-        outputs: [],
-        stateMutability: "payable",
-        type: "function",
-      },
-    ],
+  const { data: walletClient } = useWalletClient(); // from wagmi
+  const { disconnectAsync } = useDisconnect(); // from wagmi
+  const { switchChainAsync } = useSwitchChain(); // from wagmi
+  const setActiveWallet = useSetActiveWallet(); // from thirdweb/react
+  const wagmiAccount = useAccount(); // from wagmi
+  const [contract, setContract] = React.useState(null);
+
+  const client = createThirdwebClient({
+    clientId: import.meta.env.VITE_APP_THIRDWEB_CLIENT_ID,
   });
 
-  React.useEffect(() => {
+  useEffect(() => {
+    const setActive = async () => {
+      const client = createThirdwebClient({
+        clientId: import.meta.env.VITE_APP_THIRDWEB_CLIENT_ID,
+      });
+      if (walletClient) {
+        walletClient.chain.rpcUrls.default = `https://137.rpc.thirdweb.com/${
+          import.meta.env.VITE_APP_THIRDWEB_CLIENT_ID
+        }`;
+
+        // adapt the walletClient to a thirdweb account
+        const adaptedAccount = viemAdapter.walletClient.fromViem({
+          walletClient: walletClient, // accounts for wagmi/viem version mismatches
+        });
+        // create the thirdweb wallet with the adapted account
+        const thirdwebWallet = createWalletAdapter({
+          client,
+          adaptedAccount,
+          chain: twPolygon, //defineChain(await walletClient.getChainId()),
+          onDisconnect: async () => {
+            await disconnectAsync();
+          },
+          switchChain: async (chain) => {
+            await switchChainAsync({ chainId: chain.id });
+          },
+        });
+        setActiveWallet(thirdwebWallet);
+      }
+    };
+    setActive();
+  }, [walletClient, disconnectAsync, switchChainAsync, setActiveWallet]);
+
+  // handle disconnecting from wagmi
+  const thirdwebWallet = useActiveWallet();
+  useEffect(() => {
+    const disconnectIfNeeded = async () => {
+      if (thirdwebWallet && wagmiAccount.status === "disconnected") {
+        await thirdwebWallet.disconnect();
+      }
+    };
+    disconnectIfNeeded();
+  }, [wagmiAccount, thirdwebWallet]);
+
+  const claimParams = [
+    { type: "address" },
+    { type: "uint256" },
+    { type: "address" },
+    { type: "uint256" },
+    {
+      type: "tuple",
+      components: [
+        { name: "proof", type: "bytes32[]" },
+        { name: "quantityLimitPerWallet", type: "uint256" },
+        { name: "pricePerToken", type: "uint256" },
+        { name: "currency", type: "address" },
+      ],
+    },
+    { type: "bytes" },
+  ];
+
+  const claimAbi = [
+    {
+      inputs: [
+        {
+          internalType: "address",
+          name: "_receiver",
+          type: "address",
+        },
+        {
+          internalType: "uint256",
+          name: "_quantity",
+          type: "uint256",
+        },
+        {
+          internalType: "address",
+          name: "_currency",
+          type: "address",
+        },
+        {
+          internalType: "uint256",
+          name: "_pricePerToken",
+          type: "uint256",
+        },
+        {
+          components: [
+            {
+              internalType: "bytes32[]",
+              name: "proof",
+              type: "bytes32",
+            },
+            {
+              internalType: "uint256",
+              name: "quantityLimitPerWallet",
+              type: "uint256",
+            },
+            {
+              internalType: "uint256",
+              name: "pricePerToken",
+              type: "uint256",
+            },
+            {
+              internalType: "address",
+              name: "currency",
+              type: "address",
+            },
+          ],
+          internalType: "struct IDrop.AllowlistProof",
+          name: "_allowlistProof",
+          type: "tuple",
+        },
+        { internalType: "bytes", name: "_data", type: "bytes" },
+      ],
+      name: "claim",
+      outputs: [],
+      stateMutability: "payable",
+      type: "function",
+    },
+  ];
+
+  const multiCallAbi = [
+    {
+      type: "function",
+      name: "multicall",
+      inputs: [{ type: "bytes[]", name: "data" }],
+      outputs: [{ type: "bytes[]", name: "results" }],
+      stateMutability: "nonpayable",
+    },
+  ];
+
+  // retrieve the project information from the backend
+  React.useMemo(() => {
     const fetchData = async () => {
       if (!item)
         try {
@@ -137,6 +220,13 @@ function ItemView() {
           //todo: refactor this to use the item id not the index
           const currentItem = project.items[itemId];
           setItem(currentItem);
+          setContract(
+            getContract({
+              client: client,
+              chain: twPolygon,
+              address: item.contracts[0].contractAddress,
+            })
+          );
           console.log("Item data", currentItem);
         } catch (error) {
           console.error("Error fetching project data", error);
@@ -145,28 +235,34 @@ function ItemView() {
     fetchData();
   }, [item, userId, itemId, projectId]);
 
-  React.useEffect(() => {
+  // retrieve the secret document from the backend
+  React.useMemo(() => {
     const fetchData = async () => {
       if (!secretDocument)
         try {
-          const queryURL = `${
-            import.meta.env.VITE_APP_BACKEND_API_URL
-          }/retrieve?jwt=${userId}`;
+          const queryURL = 
+          `${import.meta.env.VITE_APP_BACKEND_API_URL}/retrieve?userid=${userId}&projectid=${projectId}&itemid=${itemId}`;
           console.log("fetch projects queryURL: ", queryURL);
-          const result = await axios.get(queryURL);
-          console.log("fetch projects response: ", result.data.tasks);
-          const project = result.data.tasks.find(
-            (project) => project.id == projectId
-          );
-          console.log("Project data", project);
+          const result = await axios.get(queryURL, {
+            responseType: "arraybuffer",
+            headers: {
+              Authorization: `Bearer ${dynamicJwtToken}`,
+              Accept: "application/pdf",
+            },
+          });
+          if (result.status === 200) {
+            setDocContents(result.data);
+          }
+          console.log("fetch secrets response: ", result);
         } catch (error) {
-          console.error("Error fetching project data", error);
+          console.error("Error fetching secret data", error);
         }
     };
-  }, [secretDocument, user]);
-
+    dynamicJwtToken && fetchData();
+  }, [projectId, itemId, dynamicJwtToken, userId, secretDocument]);
+  /*
   React.useEffect(() => {
-    if (account && account.address)
+    if (account && account.address && contract)
       sendTx(claimTo({ contract: contract, to: account.address, quantity: 1 }));
   }, [account, contract, sendTx]);
 /*  
@@ -185,6 +281,26 @@ function ItemView() {
       <TopNav />
       <Toast.Provider>
         <div className="w-full bg-neutral-100">
+          {docContents && <PDFViewer
+            url={docContents}
+            mode="scrolling"
+            config={{
+              relationVocabulary: ["located_at", "observed_at"],
+            }}
+            onAnnotationCreate={(annotation) => {
+              console.log("Annotation created", annotation);
+            }}
+            onAnnotationUpdate={(annotation) => {
+              console.log("Annotation updated", annotation);
+            }}
+            onAnnotationDelete={(annotation) => {
+              console.log("Annotation deleted", annotation);
+            }}
+            onSelection={(selection) => {
+              console.log("Selection", selection);
+            }}
+
+          />}
           {item ? (
             <iframe
               allowFullScreen
@@ -218,54 +334,115 @@ function ItemView() {
               </div>
             ))}
           <br />
-          <button onClick={() => sendTx({})}>Buy It</button>
-          <TransactionButton
-            transaction={() => {
-              // Create a transaction object and return it
-              const tx = prepareContractCall({
-                contract,
-                method: "claim",
-                params: [
-                  account.address,
-                  1,
-                  USDCPolygonAddress,
-                  item.contracts[0].price * 1000000,
-                  [
-                    toHex("", { size: 32 }),
-                    1,
-                    item.contracts[0].price * 1000000,
+          {primaryWallet && walletClient && walletClient.account ? (
+            <>
+              <TransactionButton
+                className="px-8 py-3 bg-dao-primary rounded-lg text-center text-neutral-50 text-base font-bold font-['DM Sans'] leading-snug cursor-pointer"
+                transaction={async () => {
+                  const provider = await primaryWallet.connector.getSigner();
+                  if (!provider) return;
+
+                  const signer =
+                    await primaryWallet.connector.ethers?.getSigner();
+
+                  console.log("signer", signer);
+
+                  const contractInstance = new ethers.Contract(
                     USDCPolygonAddress,
-                  ],
-                  "0x",
-                ],
-              });
-              return tx;
-            }}
-            payModal={{
-              supportedTokens: {
-                1: [
-                  {
-                    address: "0x3c499c542cef5e3811e1192ce70d8cc03d5c3359",
-                    name: "USD Coin",
-                    symbol: "USDC",
-                  },
-                ],
-              },
-            }}
-            onTransactionSent={(result) => {
-              console.log("Transaction submitted", result.transactionHash);
-            }}
-            onTransactionConfirmed={(receipt) => {
-              console.log("Transaction confirmed", receipt.transactionHash);
-            }}
-            onError={(error) => {
-              console.error("Transaction error", error);
-            }}
-          >
-            Buy Item
-          </TransactionButton>
+                    parseAbi([
+                      "function approve(address, uint256) returns (bool)",
+                    ]),
+                    signer
+                  );
+
+                  let receipt = await contractInstance.approve(item.contracts[0].contractAddress, BigInt(Number(item.contracts[0].price) * 10 ** 6));
+               
+                  if (receipt) {
+                    console.log("success", (await receipt).hash);
+                  } else {
+                    return;
+                  }
+                  const contract = getContract({
+                    client: client,
+                    chain: twPolygon,
+                    address: item.contracts[0].contractAddress,
+                    abi: multiCallAbi,
+                  });
+                  contract.interceptor &&
+                    contract.interceptor.overrideNextTransaction(() => ({
+                      gasLimit: 3000000,
+                    }));
+                  // let's construct the claim parameters here
+                  const claimProof = {
+                    proof: [ethers.utils.formatBytes32String("")],
+                    quantityLimitPerWallet: 1,
+                    pricePerToken: BigInt(item.contracts[0].price),
+                    currency: USDCPolygonAddress,
+                  };
+                  const paddedSignatureWithViem = encodeAbiParameters(
+                    claimParams,
+                    [
+                      primaryWallet.address,
+                      1,
+                      USDCPolygonAddress,
+                      1000000,
+                      claimProof,
+                      "0x",
+                    ]
+                  );
+                  console.log("claim params", paddedSignatureWithViem);
+                  const tx = prepareContractCall({
+                    contract: contract,
+                    method: "multicall",
+                    params: [["0x84bb1e42" + paddedSignatureWithViem.slice(2)]],
+                    gas: 10000000,
+                  });
+                  return tx;
+                }}
+                onError={(error) => {
+                  console.log("error", error);
+                }}
+              >
+                Click here
+              </TransactionButton>
+              <button
+                className="px-8 py-3 bg-dao-primary rounded-lg text-center text-neutral-50 text-base font-bold font-['DM Sans'] leading-snug cursor-pointer"
+                onClick={async () => {
+                  const provider = await primaryWallet.connector.getSigner();
+                  if (!provider) return;
+
+                  const signer =
+                    await primaryWallet.connector.ethers?.getSigner();
+
+                  console.log("signer", signer);
+
+                  const contractInstance = new ethers.Contract(
+                    USDCPolygonAddress,
+                    parseAbi([
+                      "function approve(address, uint256) returns (bool)",
+                    ]),
+                    signer
+                  );
+
+                  let receipt = await contractInstance.approve(item.contracts[0].contractAddress, BigInt(Number(item.contracts[0].price) * 10 ** 6));
+               
+                  if (receipt) {
+                    console.log("success", (await receipt).hash);
+                  }
+
+                  console.log("button clicked");
+                }}
+              >
+                Buy item for ${item && item.contracts[0].price}
+              </button>
+            </>
+          ) : (
+            <DynamicConnectButton buttonClassName="px-8 py-3 bg-dao-primary rounded-lg text-center text-neutral-50 text-base font-bold font-['DM Sans'] leading-snug cursor-pointer">
+              Connect to Purchase
+            </DynamicConnectButton>
+          )}
           <div className="flex items-center flex-wrap">
-            <span className="text-gray-400 mr-3 inline-flex items-center lg:ml-auto md:ml-0 ml-auto leading-none text-sm pr-3 py-1 border-r-2 border-gray-200">
+            <span className="text-gray-400 mr-3 inline-flex items-center lg:ml-auto md:ml-0 ml-auto leading-none text-sm pr-3 py-10 border-r-2 border-gray-200">
               <svg
                 className="w-4 h-4 mr-1"
                 stroke="currentColor"
@@ -321,27 +498,6 @@ function ItemView() {
           </div>
         </div>
         <div className="flex items-center space-x-8 p-8 content-start">
-          <div className="flex-col w-1/2">
-            <PayEmbed
-              theme="light"
-              client={client}
-              payOptions={{
-                prefillBuy: {
-                  token: {
-                    address: "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
-                    symbol: "USDC",
-                    name: "USDC",
-                  },
-                  chain: polygon,
-                },
-                allowEdits: {
-                  amount: false,
-                  token: false,
-                  chain: false,
-                },
-              }}
-            />
-          </div>
           <div className="flex-col w-1/2">
             <Chat
               context={

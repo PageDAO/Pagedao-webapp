@@ -38,9 +38,6 @@ Modal.setAppElement("#root");
 // ToDo: Check if is a new project or an existing one and populates the form accordingly
 
 function ItemCreationModal({ modalIsOpen, setIsOpen, stepProgress }) {
-  const tasks = useContext(TasksContext);
-  const dispatch = useContext(TasksDispatchContext);
-  const { updateUser } = useUserUpdateRequest();
 
   function afterOpenModal() {}
 
@@ -94,14 +91,6 @@ function ItemCreationModal({ modalIsOpen, setIsOpen, stepProgress }) {
               }}
             />
           </Progress.Root>
-        </div>
-        <div className="self-stretch justify-center items-center gap-1 inline-flex">
-          <button
-            disabled={true}
-            className="px-8 py-3 bg-dao-primary rounded-lg text-neutral-50 text-base font-bold font-['DM Sans'] leading-snug w-full"
-          >
-            Preview Item
-          </button>
         </div>
       </div>
     </Modal>
