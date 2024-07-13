@@ -16,7 +16,7 @@ import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
                         </div>
                         <div className="justify-end items-center gap-4 flex">
                             {user.userId &&
-                            <Link to={"/profile/"+userId}
+                            <Link to={"/profile/"+user.userId}
                                 className="bg-white px-4 py-3 rounded-xl text-neutral-800 text-base font-medium font-['DM Sans'] leading-snug">
                                 View my profile
                             </Link>}

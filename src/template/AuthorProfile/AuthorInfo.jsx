@@ -2,6 +2,7 @@
 import { XCircle } from "lucide-react";
 import { useSocialAccounts } from "@dynamic-labs/sdk-react-core";
 import { SocialIcon } from "@dynamic-labs/iconic";
+import { StarIcon } from "@radix-ui/react-icons";
 import React from "react";
 
 const Avatar = ({ avatarUrl }) => {
@@ -92,14 +93,18 @@ function AuthorInfo({ author, iscurrentuser }) {
               textOverflow: "ellipsis",
             }}
           >
-            {author.bio}
+            {author.jobTitle}
           </div>
-          <div className="flex justify-start items-center">
-            <div className="mt-5 relative w-10 h-10 bg-gray-500 rounded-full flex items-center justify-center">
-              <span className="text-white ">Pic</span>
+          <div className="mt-10 flex justify-start items-center">
+            <div>
+              <StarIcon className="w-10 h-10 text-yellow-400" />
             </div>
             <div className="text-medium font-['DM Sans'] leading-tight ml-3 mt-5">
-              wallet address
+              PageDAO User since {new Date(author.firstVisit).toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })}
             </div>
           </div>
         </div>

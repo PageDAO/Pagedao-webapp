@@ -1,7 +1,7 @@
 import { createContext, useReducer, useEffect } from "react";
 import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import axios from "axios";
-import { pinToIPFS, updateUserMetadata } from "../Utils";
+import { pinToIPFS } from "../Utils";
 
 export const TasksContext = createContext(null);
 export const TasksDispatchContext = createContext(null);
@@ -75,11 +75,10 @@ export function TasksProvider({ children }) {
 }
 
 function tasksReducer(tasks, action) {
-  const saveIfNecessary = (userUpdateFunction, user, newTasks) => {
+  const saveIfNecessary = (userUpdateFunction, newTasks) => {
     if (userUpdateFunction)
-    //  saveMetadata(newTasks).then((value) => {
-      updateUserMetadata())      
-      userUpdateFunction(
+      saveMetadata(newTasks).then((value) => {
+        userUpdateFunction(
           value,
           import.meta.env.VITE_APP_DYNAMIC_ENVIRONMENT_ID
         );
