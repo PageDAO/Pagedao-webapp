@@ -10,6 +10,7 @@ function AuthorInfo({author, iscurrentuser }) {
           <div className="mb-4">
             <h2 className="text-neutral-800 text-ex-large font-bold font-['Arvo']">
               {author.alias}
+              {JSON.stringify(author) }
             </h2>
           </div>
           <div

@@ -26,8 +26,10 @@ import ReactWindowedSelect from "../../components/ReactWindowedSelect";
 import ItemCreationModal from "./ItemCreationModal";
 import { createThirdwebClient } from "thirdweb";
 import { upload } from "thirdweb/storage";
-import * as Dialog from "@radix-ui/react-dialog";
-import * as Progress from "@radix-ui/react-progress";
+import { BlockTypeSelect, BoldItalicUnderlineToggles, CreateLink, imagePlugin, InsertImage, linkDialogPlugin, MDXEditor, toolbarPlugin } from "@mdxeditor/editor";
+import { headingsPlugin } from "@mdxeditor/editor";
+
+import "@mdxeditor/editor/style.css";
 
 const genreOptions = genreTags.map((item) => {
   return { value: item, label: item };
@@ -68,10 +70,10 @@ function AddBookDetail({ projectIndex, itemIndex }) {
     // prepopulate things if itemindex is provided
     if (itemIndex) {
       setCoverImage(
-        projects[projectIndex].items[itemIndex].image.startsWith("https://")?
-        projects[projectIndex].items[itemIndex].image:
-        "https://ipfs.nftbookbazaar.com/ipfs/" +
-          projects[projectIndex].items[itemIndex].image
+        projects[projectIndex].items[itemIndex].image.startsWith("https://")
+          ? projects[projectIndex].items[itemIndex].image
+          : "https://ipfs.nftbookbazaar.com/ipfs/" +
+              projects[projectIndex].items[itemIndex].image
       );
       setBookName(projects[projectIndex].items[itemIndex].name);
       // todo: set filename to let a person know it's saved and present (and they don't need to upload again)
@@ -113,7 +115,7 @@ function AddBookDetail({ projectIndex, itemIndex }) {
     timerRef.current = window.setTimeout(() => {
       setOpen(true);
       setToastMessage(message);
-    }, 100);
+    }, 200);
   }
 
   // todo: load form values if the itemIndex is not null
@@ -124,7 +126,9 @@ function AddBookDetail({ projectIndex, itemIndex }) {
       showToastMessage("Uploading cover image");
       const ipfsURI = await upload({ client: client, files: [file] });
 
-      const uri = "https://f249a59bdff8d2da0eb19725b90c6904.ipfscdn.io/ipfs/" + ipfsURI.substring(7);
+      const uri =
+        "https://f249a59bdff8d2da0eb19725b90c6904.ipfscdn.io/ipfs/" +
+        ipfsURI.substring(7);
       setCoverImage(uri);
       setCoverImageType(file.type);
       console.log("set the cover image", uri);
@@ -250,9 +254,8 @@ function AddBookDetail({ projectIndex, itemIndex }) {
   }
 
   const createProjectItem = async () => {
-
     setProgressMsg({ message: "Saving cover image", value: 20 });
-/*
+    /*
     const coverImageFile =
       changes.coverImage || !itemIndex
         ? new File(
@@ -304,13 +307,21 @@ function AddBookDetail({ projectIndex, itemIndex }) {
     const html = Buffer.from(generatePDFBookFromTemplate(options), "utf8");
     const htmlURI = await uploadToAPI(html, "index.html");
 
-    const suggestedItemId = itemIndex?projects[projectIndex].items[itemIndex].id:projects[projectIndex].nextItemID;
+    const suggestedItemId = itemIndex
+      ? projects[projectIndex].items[itemIndex].id
+      : projects[projectIndex].nextItemID;
     // todo: add tags, genre, and type as attributes
     const itemMetadata = {
       name: bookName,
       description: description,
       image: coverImageURI,
-      external_link: "https://pagedao-v2.netlify.app/book/" + user.userId + "/" + projects[projectIndex].id + "/" + suggestedItemId,
+      external_link:
+        "https://pagedao-v2.netlify.app/book/" +
+        user.userId +
+        "/" +
+        projects[projectIndex].id +
+        "/" +
+        suggestedItemId,
       animation_url: "https://ipfs.nftbookbazaar.com/ipfs/" + htmlURI,
       attributes: [
         { trait_type: "Type", value: itemType },
@@ -341,7 +352,7 @@ function AddBookDetail({ projectIndex, itemIndex }) {
     const contractMetadata = {
       name: `${projects[projectIndex].title} - ${itemType}`,
       symbol: bookName.toUpperCase().substring(0, 5),
-      image: "https://ipfs.nftbookbazaar.com/ipfs/" + coverImageURI,
+      image: coverImageURI, //"https://ipfs.nftbookbazaar.com/ipfs/" + coverImageURI,
       seller_fee_basis_points: 1000,
       fee_recipient: user.wallet?.address,
     };
@@ -484,11 +495,21 @@ function AddBookDetail({ projectIndex, itemIndex }) {
 
     var cover;
 
-    //embed the image
+    //embed the image and try the opposite if it doesn't work
     if (coverType == "png") {
+      try {
       cover = await pdfDoc.embedPng(coverImageBytes);
+      } catch (error) {
+        cover = await pdfDoc.embedJpg(coverImageBytes);
+        setCoverImageType("jpg");
+      }
     } else {
+      try {
       cover = await pdfDoc.embedJpg(coverImageBytes);
+      } catch (error) {
+        cover = await pdfDoc.embedPng(coverImageBytes);
+        setCoverImageType("png");
+      }
     }
 
     const coverImg = (img, page, pageObject, type) => {
@@ -728,7 +749,7 @@ function AddBookDetail({ projectIndex, itemIndex }) {
                           <textarea
                             className="bg-transparent py-2 text-black text-base font-normal font-['DM Sans'] leading-snug w-full focus:outline-none"
                             name="description"
-                            placeholder="Write a good description"
+                            placeholder="Write a description"
                             rows="5"
                             onChange={handleDescriptionChange}
                             value={description}

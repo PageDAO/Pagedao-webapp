@@ -19,7 +19,7 @@ function AuthorGallery({author, iscurrentuser }) {
         <div className="container">
           <div className="bloc-tabs">
             <div className="flex items-center mt-10">
-              <button className={`text-neutral-800 text-large font-Arvo leading-normal ${activeTab === 0 ? "tabs active-tabs" : "tabs"}`} onClick={() => setActiveTab(0)}>Creation (3)</button>
+              <button className={`text-neutral-800 text-large font-Arvo leading-normal ${activeTab === 0 ? "tabs active-tabs" : "tabs"}`} onClick={() => setActiveTab(0)}>Created (3)</button>
               <button className={`ml-20 text-neutral-800 text-large font-Arvo leading-normal ${activeTab === 1 ? "tabs active-tabs" : "tabs"}`} onClick={() => setActiveTab(1)}>Collected (5)</button>
             </div>
           </div>

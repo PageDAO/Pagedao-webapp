@@ -1,7 +1,7 @@
 import {Link} from "react-router-dom";
 import {Settings} from "lucide-react";
 
-function Header() {
+function Header(headerText = "Dashboard") {
     return (
         <>
             <div className="w-full bg-neutral-100">
@@ -9,7 +9,7 @@ function Header() {
                     <div className="">
                         <h2
                             className="text-neutral-800 text-6xl font-bold font-['Arvo']">
-                            My Books
+                            {headerText}
                         </h2>
                     </div>
                     <div className="justify-end items-center gap-4 flex">

@@ -30,7 +30,7 @@ const createClaimParams = (
         maxClaimableSupply: maxClaimableSupply,
         maxClaimablePerWallet: maxClaimableSupply,
         currencyAddress: currency,
-        price: pricePerToken*10**6,
+        price: pricePerToken * 10 ** 6,
         startTime: new Date(),
       },
     ],
@@ -97,6 +97,7 @@ function PreviewBookDetail({ projectIndex, itemIndex }) {
   const [contractAddress, setContractAddress] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isMinting, setIsMinting] = useState(false);
+  const [isMinted, setIsMinted] = useState(false);
   const [project, setProject] = useState({});
   const [item, setItem] = useState({});
   const navigate = useNavigate();
@@ -148,7 +149,7 @@ function PreviewBookDetail({ projectIndex, itemIndex }) {
           maxClaimableSupply: maxClaimableSupply,
           maxClaimablePerWallet: maxClaimableSupply,
           currencyAddress: currency,
-          price: pricePerToken*100,
+          price: pricePerToken * 10 ** 6,
           startTime: new Date(),
         },
       ],
@@ -224,9 +225,9 @@ function PreviewBookDetail({ projectIndex, itemIndex }) {
             const contract = getContract({
               client: client,
               chain: polygon,
-              address: contractAddress,
+              address: item.contracts[0].contractAddress,
             });
-        
+
             const multiCallAbi = [
               {
                 type: "function",
@@ -236,14 +237,19 @@ function PreviewBookDetail({ projectIndex, itemIndex }) {
                 stateMutability: "nonpayable",
               },
             ];
-        
+
             const maxClaimableSupply = item.supply;
             const pricePerToken = item.contracts[0].price;
             const currency = USDCPolygonAddress;
             const metadataURI =
-              "https://ipfs.nftbookbazaar.com/ipfs/" + item.itemMetadataURI + "?";
-        
-            setProgressMsg({ message: "Creating claim conditions...", value: 50 });
+              "https://ipfs.nftbookbazaar.com/ipfs/" +
+              item.itemMetadataURI +
+              "?";
+
+            setProgressMsg({
+              message: "Creating claim conditions...",
+              value: 50,
+            });
             setClaimConditions({
               contract,
               phases: [
@@ -258,8 +264,12 @@ function PreviewBookDetail({ projectIndex, itemIndex }) {
             })
               .data()
               .then((data) => {
-                const mintParams = createLazyMintParams(item.supply, metadataURI, "0x");
-        
+                const mintParams = createLazyMintParams(
+                  item.supply,
+                  metadataURI,
+                  "0x"
+                );
+
                 setProgressMsg({
                   message:
                     "Minting NFT (check your wallet and confirm transaction )...",
@@ -274,7 +284,6 @@ function PreviewBookDetail({ projectIndex, itemIndex }) {
                 });
                 return multicallResult;
               });
-        
           }
         });
     } else {
@@ -286,7 +295,7 @@ function PreviewBookDetail({ projectIndex, itemIndex }) {
     }
   }
 
- // useMemo(CreateNFT, [isMinting]);
+  // useMemo(CreateNFT, [isMinting]);
 
   useEffect(() => {
     if (
@@ -309,6 +318,16 @@ function PreviewBookDetail({ projectIndex, itemIndex }) {
     }
   }, [projects, primaryWallet, project, projectIndex, itemIndex, item]);
 
+  useEffect(() => {
+    if (isMinted)
+      dispatch({
+        type: "projectItemChanged",
+        id: item.id,
+        item: item,
+        userUpdateFunction: updateUser,
+      });
+  }, [isMinted, dispatch, updateUser, item]);
+
   useMemo(() => {
     if (status === "error") {
       console.log("error minting:", failureReason);
@@ -316,12 +335,7 @@ function PreviewBookDetail({ projectIndex, itemIndex }) {
     if (status === "success") {
       console.log("successfully minted");
       // do the dispatch here!!!
-      dispatch({
-        type: "projectItemChanged",
-        id: item.id,
-        item: item,
-        userUpdateFunction: updateUser,
-      });
+      setIsMinted(true);
       navigate("/book/publishing-done/" + projectIndex + "/" + itemIndex);
     }
   }, [status, projectIndex, itemIndex]);

@@ -26,6 +26,7 @@
     "@dynamic-labs/starknet": "^2.0.6",
     "@dynamic-labs/wagmi-connector": "^2.0.6",
     "@grapesjs/react": "^1.0.0",
+    "@mdxeditor/editor": "^3.8.0",
     "@orbisclub/components": "^0.2.11",
     "@radix-ui/colors": "^3.0.0",
     "@radix-ui/react-alert-dialog": "^1.1.1",

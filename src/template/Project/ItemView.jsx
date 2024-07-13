@@ -42,11 +42,12 @@ import {
 } from "thirdweb/react";
 import { createWalletAdapter } from "thirdweb/wallets";
 import { polygon as twPolygon } from "thirdweb/chains";
-import {pdfjs, PDFViewer } from "@recogito/recogito-react-pdf";
+import { pdfjs, PDFViewer } from "@recogito/recogito-react-pdf";
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.js',
-  import.meta.url);
+  "pdfjs-dist/build/pdf.worker.js",
+  import.meta.url
+);
 
 function ItemView() {
   const [modalIsOpen, setIsOpen] = React.useState(false);
@@ -207,27 +208,23 @@ function ItemView() {
     const fetchData = async () => {
       if (!item)
         try {
-          const queryURL = `${
-            import.meta.env.VITE_APP_BACKEND_API_URL
-          }/usermetadata?userid=${userId}`;
-          console.log("fetch projects queryURL: ", queryURL);
-          const result = await axios.get(queryURL);
-          console.log("fetch projects response: ", result.data.tasks);
+          const result = await axios.get(
+            `${
+              import.meta.env.VITE_APP_BACKEND_API_URL
+            }/usermetadata?userid=${userId}`
+          );
           const project = result.data.tasks.find(
             (project) => project.id == projectId
           );
-          console.log("Project data", project);
-          //todo: refactor this to use the item id not the index
-          const currentItem = project.items[itemId];
-          setItem(currentItem);
+
+          setItem(project.items[itemId]);
           setContract(
             getContract({
               client: client,
               chain: twPolygon,
-              address: item.contracts[0].contractAddress,
+              address: project.items[itemId].contracts[0].contractAddress,
             })
           );
-          console.log("Item data", currentItem);
         } catch (error) {
           console.error("Error fetching project data", error);
         }
@@ -237,28 +234,27 @@ function ItemView() {
 
   // retrieve the secret document from the backend
   React.useMemo(() => {
-    const fetchData = async () => {
-      if (!secretDocument)
-        try {
-          const queryURL = 
-          `${import.meta.env.VITE_APP_BACKEND_API_URL}/retrieve?userid=${userId}&projectid=${projectId}&itemid=${itemId}`;
-          console.log("fetch projects queryURL: ", queryURL);
-          const result = await axios.get(queryURL, {
-            responseType: "arraybuffer",
-            headers: {
-              Authorization: `Bearer ${dynamicJwtToken}`,
-              Accept: "application/pdf",
-            },
-          });
-          if (result.status === 200) {
-            setDocContents(result.data);
-          }
-          console.log("fetch secrets response: ", result);
-        } catch (error) {
-          console.error("Error fetching secret data", error);
-        }
-    };
-    dynamicJwtToken && fetchData();
+    if (!secretDocument && dynamicJwtToken) {
+      const queryURL = `${
+        import.meta.env.VITE_APP_BACKEND_API_URL
+      }/retrieve?userid=${userId}&projectid=${projectId}&itemid=${itemId}`;
+      console.log("fetch projects queryURL: ", queryURL);
+
+      axios
+        .get(queryURL, {
+          responseType: "arraybuffer",
+          headers: {
+            Authorization: `Bearer ${dynamicJwtToken}`,
+            Accept: "application/pdf",
+          },
+        })
+        .then((response) => {
+          setDocContents(response.data);
+        })
+        .catch((error) => {
+          console.warn(error);
+        });
+    }
   }, [projectId, itemId, dynamicJwtToken, userId, secretDocument]);
   /*
   React.useEffect(() => {
@@ -281,26 +277,27 @@ function ItemView() {
       <TopNav />
       <Toast.Provider>
         <div className="w-full bg-neutral-100">
-          {docContents && <PDFViewer
-            url={docContents}
-            mode="scrolling"
-            config={{
-              relationVocabulary: ["located_at", "observed_at"],
-            }}
-            onAnnotationCreate={(annotation) => {
-              console.log("Annotation created", annotation);
-            }}
-            onAnnotationUpdate={(annotation) => {
-              console.log("Annotation updated", annotation);
-            }}
-            onAnnotationDelete={(annotation) => {
-              console.log("Annotation deleted", annotation);
-            }}
-            onSelection={(selection) => {
-              console.log("Selection", selection);
-            }}
-
-          />}
+          {docContents && (
+            <PDFViewer
+              url={docContents}
+              mode="scrolling"
+              config={{
+                relationVocabulary: ["located_at", "observed_at"],
+              }}
+              onAnnotationCreate={(annotation) => {
+                console.log("Annotation created", annotation);
+              }}
+              onAnnotationUpdate={(annotation) => {
+                console.log("Annotation updated", annotation);
+              }}
+              onAnnotationDelete={(annotation) => {
+                console.log("Annotation deleted", annotation);
+              }}
+              onSelection={(selection) => {
+                console.log("Selection", selection);
+              }}
+            />
+          )}
           {item ? (
             <iframe
               allowFullScreen
@@ -337,104 +334,21 @@ function ItemView() {
           {primaryWallet && walletClient && walletClient.account ? (
             <>
               <TransactionButton
+                unstyled
                 className="px-8 py-3 bg-dao-primary rounded-lg text-center text-neutral-50 text-base font-bold font-['DM Sans'] leading-snug cursor-pointer"
-                transaction={async () => {
-                  const provider = await primaryWallet.connector.getSigner();
-                  if (!provider) return;
-
-                  const signer =
-                    await primaryWallet.connector.ethers?.getSigner();
-
-                  console.log("signer", signer);
-
-                  const contractInstance = new ethers.Contract(
-                    USDCPolygonAddress,
-                    parseAbi([
-                      "function approve(address, uint256) returns (bool)",
-                    ]),
-                    signer
-                  );
-
-                  let receipt = await contractInstance.approve(item.contracts[0].contractAddress, BigInt(Number(item.contracts[0].price) * 10 ** 6));
-               
-                  if (receipt) {
-                    console.log("success", (await receipt).hash);
-                  } else {
-                    return;
-                  }
-                  const contract = getContract({
-                    client: client,
-                    chain: twPolygon,
-                    address: item.contracts[0].contractAddress,
-                    abi: multiCallAbi,
-                  });
-                  contract.interceptor &&
-                    contract.interceptor.overrideNextTransaction(() => ({
-                      gasLimit: 3000000,
-                    }));
-                  // let's construct the claim parameters here
-                  const claimProof = {
-                    proof: [ethers.utils.formatBytes32String("")],
-                    quantityLimitPerWallet: 1,
-                    pricePerToken: BigInt(item.contracts[0].price),
-                    currency: USDCPolygonAddress,
-                  };
-                  const paddedSignatureWithViem = encodeAbiParameters(
-                    claimParams,
-                    [
-                      primaryWallet.address,
-                      1,
-                      USDCPolygonAddress,
-                      1000000,
-                      claimProof,
-                      "0x",
-                    ]
-                  );
-                  console.log("claim params", paddedSignatureWithViem);
-                  const tx = prepareContractCall({
+                transaction={() => {
+                  return claimTo({
                     contract: contract,
-                    method: "multicall",
-                    params: [["0x84bb1e42" + paddedSignatureWithViem.slice(2)]],
-                    gas: 10000000,
+                    to: walletClient.account.address,
+                    quantity: 1,
                   });
-                  return tx;
                 }}
                 onError={(error) => {
                   console.log("error", error);
                 }}
               >
-                Click here
+                Purchase for ${item && item.contracts[0].price} USDC
               </TransactionButton>
-              <button
-                className="px-8 py-3 bg-dao-primary rounded-lg text-center text-neutral-50 text-base font-bold font-['DM Sans'] leading-snug cursor-pointer"
-                onClick={async () => {
-                  const provider = await primaryWallet.connector.getSigner();
-                  if (!provider) return;
-
-                  const signer =
-                    await primaryWallet.connector.ethers?.getSigner();
-
-                  console.log("signer", signer);
-
-                  const contractInstance = new ethers.Contract(
-                    USDCPolygonAddress,
-                    parseAbi([
-                      "function approve(address, uint256) returns (bool)",
-                    ]),
-                    signer
-                  );
-
-                  let receipt = await contractInstance.approve(item.contracts[0].contractAddress, BigInt(Number(item.contracts[0].price) * 10 ** 6));
-               
-                  if (receipt) {
-                    console.log("success", (await receipt).hash);
-                  }
-
-                  console.log("button clicked");
-                }}
-              >
-                Buy item for ${item && item.contracts[0].price}
-              </button>
             </>
           ) : (
             <DynamicConnectButton buttonClassName="px-8 py-3 bg-dao-primary rounded-lg text-center text-neutral-50 text-base font-bold font-['DM Sans'] leading-snug cursor-pointer">
