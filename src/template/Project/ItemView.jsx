@@ -43,6 +43,7 @@ import {
 import { createWalletAdapter } from "thirdweb/wallets";
 import { polygon as twPolygon } from "thirdweb/chains";
 import { pdfjs, PDFViewer } from "@recogito/recogito-react-pdf";
+import { ClipboardIcon } from "@radix-ui/react-icons";
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   "pdfjs-dist/build/pdf.worker.js",
@@ -325,7 +326,7 @@ function ItemView() {
             item.tags.split(",").map((tag) => (
               <div
                 key={tag}
-                className="px-2 py-1 left-[16px] top-[16px] bg-amber-200 rounded-lg justify-center items-center gap-2 inline-flex text-neutral-800 text-sm font-normal font-['DM Sans'] leading-tight"
+                className="px-2 py-1 mb-10 mr-4 space-x-4 bg-amber-200 rounded-lg justify-center items-center inline-flex text-neutral-800 text-sm font-normal font-['DM Sans'] leading-tight"
               >
                 {tag}
               </div>
@@ -344,7 +345,7 @@ function ItemView() {
                   });
                 }}
                 onError={(error) => {
-                  console.log("error", error);
+                  setToastMessage("Error claiming NFT: " + error.message);
                 }}
               >
                 Purchase for ${item && item.contracts[0].price} USDC
@@ -356,7 +357,7 @@ function ItemView() {
             </DynamicConnectButton>
           )}
           <div className="flex items-center flex-wrap">
-            <span className="text-gray-400 mr-3 inline-flex items-center lg:ml-auto md:ml-0 ml-auto leading-none text-sm pr-3 py-10 border-r-2 border-gray-200">
+            <span className="text-gray-400 mr-3 inline-flex items-center lg:ml-auto md:ml-0 ml-auto leading-none text-sm pr-3 border-r-2 border-gray-200">
               <svg
                 className="w-4 h-4 mr-1"
                 stroke="currentColor"
@@ -371,7 +372,20 @@ function ItemView() {
               </svg>
               1.2K
             </span>
-            <span className="text-gray-400 inline-flex items-center leading-none text-sm px-4">
+            {item && (<span
+              className="text-gray-400 inline-flex items-center leading-none text-sm mr-3 border-r-2 cursor-pointer"
+              onClick={() => {
+                navigator.clipboard.writeText(
+                  item.contracts[0].contractAddress
+                );
+                setToastMessage("Copied contract address to clipboard");
+              }}
+            >
+              <ClipboardIcon />
+              <span className="px-2">{item.contracts[0].contractAddress}</span>
+            </span>
+            )}
+            <span className="text-gray-400 inline-flex items-center leading-none text-sm border-r-2 pr-2">
               <svg
                 fill="currentColor"
                 height="21px"
@@ -395,7 +409,7 @@ function ItemView() {
                 </g>
               </svg>
             </span>
-            <span className="text-gray-400 inline-flex items-center leading-none text-sm">
+            <span className="text-gray-400 inline-flex items-center leading-none text-sm pl-2">
               <svg
                 className="w-4 h-4 mr-1"
                 stroke="currentColor"

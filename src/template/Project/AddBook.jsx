@@ -31,10 +31,15 @@ function AddBook() {
             breadcrumb="Back"
             breadcrumbLink={{ pathname: `/project/${params.projectIndex}` }}
           />
-          <div className="container mx-auto">
-            Add a new item to your project.
+          {params.itemIndex && projects[params.projectIndex].items[params.itemIndex].contracts[0].contractAddress ? (
+            <div className="container bt0 mx-auto bg-blue-200 p-2">
+              This item has been published and cannot be modified
+            </div>
+          ) : (
+          <div className="container bt0 mx-auto">
+            {params.itemIndex ? "Edit your project item": "Add a new item to your project"}.
           </div>
-
+          )}
           <AddBookDetail
             projectIndex={params.projectIndex}
             itemIndex={params.itemIndex}

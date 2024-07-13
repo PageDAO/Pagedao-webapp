@@ -24,6 +24,7 @@ function AuthorProfile() {
                 axios.defaults.headers.get['Content-Type'] = 'application/json';
                 const response = await axios.get(import.meta.env.VITE_APP_BACKEND_API_URL+`/usermetadata?userid=${userId}`);
                 setAuthor(response.data);
+                console.log(response.data);
             } catch (error) {
                 console.error('Failed to fetch author:', error);
             }
@@ -41,7 +42,7 @@ function AuthorProfile() {
             {author?(
                 <div className="container mx-auto">
                     <AuthorInfo author={author} isCurrentUser={isCurrentUser} />
-                    <AuthorGallery books={author} isCurrentUser={isCurrentUser} />
+                    <AuthorGallery author={author} isCurrentUser={isCurrentUser} />
                 
                 </div>
             ):(<p>Loading...</p>)}

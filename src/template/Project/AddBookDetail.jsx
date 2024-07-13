@@ -10,8 +10,7 @@ import {
   generatePDFBookFromTemplate,
   pinToIPFS,
   encryptAndStoreItem,
-  fetchMetadata,
-  saveMetadata,
+  updateUserMetadata,
   genreTags,
   itemTypeTags,
   descriptorTags,
@@ -41,7 +40,7 @@ function AddBookDetail({ projectIndex, itemIndex }) {
   const { updateUser } = useUserUpdateRequest();
   const [isModified, setIsModified] = useState(false);
   const [changes, setChanges] = useState({ coverImage: false, pdfData: false });
-  const [coverImage, setCoverImage] = useState();
+  const [coverImage, setCoverImage] = useState("");
   const [coverImageType, setCoverImageType] = useState("");
   const [isHovering, setIsHovering] = useState(false);
   const [allowPreview, setAllowPreview] = useState(false);
@@ -118,6 +117,10 @@ function AddBookDetail({ projectIndex, itemIndex }) {
     }, 200);
   }
 
+  useEffect(() => {
+    console.log("updating cover image", coverImage);
+  }, [coverImage]);
+
   // todo: load form values if the itemIndex is not null
   const handleImageUpload = async (event) => {
     const file = event.target.files[0];
@@ -131,7 +134,7 @@ function AddBookDetail({ projectIndex, itemIndex }) {
         ipfsURI.substring(7);
       setCoverImage(uri);
       setCoverImageType(file.type);
-      console.log("set the cover image", uri);
+      console.log("set the cover image", coverImage);
       setChanges({ pdfData: changes.pdfData, coverImage: true });
       setIsHovering(false);
       setIsModified(true);

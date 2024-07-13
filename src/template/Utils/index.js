@@ -3,7 +3,7 @@ import { pinToIPFS } from "./pinToIPFS";
 import { ECDHEncryption } from "./ECDHEncryption";
 import { isDataURL, dataURItoBlob } from "./dataURI";
 import { encryptAndStoreItem } from "./encryptAndStoreItem";
-import { saveMetadata, fetchMetadata } from "./userMetadata";
+import { fetchMetadata, updateUserMetadata } from "./userMetadata";
 import {
   createInitializeContractParams,
   deployProxyAbi,
@@ -18,8 +18,8 @@ export {
   isDataURL,
   dataURItoBlob,
   encryptAndStoreItem,
-  saveMetadata,
   fetchMetadata,
+  updateUserMetadata,
   createInitializeContractParams,
   deployProxyAbi,
   contractConfig,

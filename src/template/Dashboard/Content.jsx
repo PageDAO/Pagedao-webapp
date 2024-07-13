@@ -110,9 +110,11 @@ function Content() {
               </Toast.Root>
               <Toast.Viewport className="ToastViewport" />
             </div>
+            {tasks && (
             <div className="basis-1/4 w-full">
-              <SideBar projects={tasks}/>
+              <SideBar projects={tasks.length}/>
             </div>
+            )}
           </div>
         </div>
       </Toast.Provider>

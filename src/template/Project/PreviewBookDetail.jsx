@@ -30,7 +30,7 @@ const createClaimParams = (
         maxClaimableSupply: maxClaimableSupply,
         maxClaimablePerWallet: maxClaimableSupply,
         currencyAddress: currency,
-        price: pricePerToken * 10 ** 6,
+        price: pricePerToken,
         startTime: new Date(),
       },
     ],
@@ -98,6 +98,7 @@ function PreviewBookDetail({ projectIndex, itemIndex }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isMinting, setIsMinting] = useState(false);
   const [isMinted, setIsMinted] = useState(false);
+  const [lazyMintParams, setLazyMintParams] = useState([]);
   const [project, setProject] = useState({});
   const [item, setItem] = useState({});
   const navigate = useNavigate();
@@ -113,6 +114,35 @@ function PreviewBookDetail({ projectIndex, itemIndex }) {
     value: 0,
   });
 
+  const multiCallAbi = [
+    {
+      type: "function",
+      name: "multicall",
+      inputs: [{ type: "bytes[]", name: "data" }],
+      outputs: [{ type: "bytes[]", name: "results" }],
+      stateMutability: "nonpayable",
+    },
+  ];
+
+  useEffect(() => {
+    console.log("calling multicall", lazyMintParams, isMinting);
+    if (lazyMintParams.length > 0 && isMinting) { 
+      setProgressMsg({
+        message:
+          "Minting NFT (check your wallet and confirm transaction )...",
+        value: 75,
+      });
+      const multicallResult = writeContract({
+          address: contractAddress,
+          abi: multiCallAbi,
+          functionName: "multicall",
+          args: [[...lazyMintParams]],
+        });
+      setIsMinted(true);
+        return multicallResult;
+      }
+  }, [contractAddress, lazyMintParams, isMinting]);
+
   const CreateNFT = () => {
     if (!(contractAddress && isMinting)) return;
 
@@ -124,16 +154,6 @@ function PreviewBookDetail({ projectIndex, itemIndex }) {
       chain: polygon,
       address: contractAddress,
     });
-
-    const multiCallAbi = [
-      {
-        type: "function",
-        name: "multicall",
-        inputs: [{ type: "bytes[]", name: "data" }],
-        outputs: [{ type: "bytes[]", name: "results" }],
-        stateMutability: "nonpayable",
-      },
-    ];
 
     const maxClaimableSupply = item.supply;
     const pricePerToken = item.contracts[0].price;
@@ -149,7 +169,7 @@ function PreviewBookDetail({ projectIndex, itemIndex }) {
           maxClaimableSupply: maxClaimableSupply,
           maxClaimablePerWallet: maxClaimableSupply,
           currencyAddress: currency,
-          price: pricePerToken * 10 ** 6,
+          price: 0, //pricePerToken,
           startTime: new Date(),
         },
       ],
@@ -157,20 +177,7 @@ function PreviewBookDetail({ projectIndex, itemIndex }) {
       .data()
       .then((data) => {
         const mintParams = createLazyMintParams(item.supply, metadataURI, "0x");
-
-        setProgressMsg({
-          message:
-            "Minting NFT (check your wallet and confirm transaction )...",
-          value: 75,
-        });
-        console.log("calling multicall", data, mintParams);
-        const multicallResult = writeContract({
-          address: contractAddress,
-          abi: multiCallAbi,
-          functionName: "multicall",
-          args: [[data, mintParams]],
-        });
-        return multicallResult;
+        setLazyMintParams([data,mintParams]);
       });
   };
 
@@ -319,13 +326,15 @@ function PreviewBookDetail({ projectIndex, itemIndex }) {
   }, [projects, primaryWallet, project, projectIndex, itemIndex, item]);
 
   useEffect(() => {
-    if (isMinted)
+    if (isMinted) {
       dispatch({
         type: "projectItemChanged",
         id: item.id,
         item: item,
         userUpdateFunction: updateUser,
       });
+      navigate("/book/publishing-done/" + projectIndex + "/" + itemIndex);
+    }
   }, [isMinted, dispatch, updateUser, item]);
 
   useMemo(() => {
@@ -335,8 +344,8 @@ function PreviewBookDetail({ projectIndex, itemIndex }) {
     if (status === "success") {
       console.log("successfully minted");
       // do the dispatch here!!!
+      setIsMinting(false);
       setIsMinted(true);
-      navigate("/book/publishing-done/" + projectIndex + "/" + itemIndex);
     }
   }, [status, projectIndex, itemIndex]);
 

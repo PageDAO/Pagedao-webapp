@@ -1,9 +1,8 @@
 import { useContext } from "react";
 import {TasksContext} from "../Providers/TasksContext";
-import { useParams } from "react-router-dom";
 
 function SideBar() {
-    const tasks = useParams('projects');
+    const tasks = useContext(TasksContext);
     return (
         <>
             <div
