@@ -234,10 +234,10 @@ function ItemView() {
 
   // retrieve the secret document from the backend
   React.useMemo(() => {
-    if (!secretDocument && dynamicJwtToken) {
+    if (!secretDocument && dynamicJwtToken && item) {
       const queryURL = `${
         import.meta.env.VITE_APP_BACKEND_API_URL
-      }/retrieve?userid=${userId}&projectid=${projectId}&itemid=${itemId}`;
+      }/retrieve?userid=${userId}&projectid=${projectId}&itemid=${item.id}`;
       console.log("fetch projects queryURL: ", queryURL);
 
       axios
@@ -255,7 +255,7 @@ function ItemView() {
           console.warn(error);
         });
     }
-  }, [projectId, itemId, dynamicJwtToken, userId, secretDocument]);
+  }, [projectId, item, dynamicJwtToken, userId, secretDocument]);
   /*
   React.useEffect(() => {
     if (account && account.address && contract)
