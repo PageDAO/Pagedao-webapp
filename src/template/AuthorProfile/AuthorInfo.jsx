@@ -1,9 +1,7 @@
 // AuthorInfo.jsx
-import { XCircle } from "lucide-react";
 import { useSocialAccounts } from "@dynamic-labs/sdk-react-core";
 import { SocialIcon } from "@dynamic-labs/iconic";
 import { StarIcon } from "@radix-ui/react-icons";
-import React from "react";
 
 const Avatar = ({ avatarUrl }) => {
   return (
@@ -23,7 +21,7 @@ const Icon = ({ provider }) => {
     </div>
   );
 };
-const UserProfileSocialAccount = ({ provider }) => {
+const UserProfileSocialAccount = ({ provider, iscurrentuser }) => {
   const {
     linkSocialAccount,
     unlinkSocialAccount,
@@ -34,6 +32,17 @@ const UserProfileSocialAccount = ({ provider }) => {
 
   const isProviderLinked = isLinked(provider);
   const connectedAccountInfo = getLinkedAccountInformation(provider);
+  if (!iscurrentuser) {
+    return (
+      isProviderLinked && (
+        <div className="flex flex-col justify-content">
+          <div className="icon">
+            <Icon provider={provider} />
+          </div>
+        </div>
+      )
+    );
+  }
 
   return (
     <div className="flex flex-col justify-content">
@@ -74,7 +83,7 @@ const providers = [
   "twitter",
 ];
 
-function AuthorInfo({ author, iscurrentuser }) {
+function AuthorInfo({ author, isCurrentUser }) {
   return (
     <div>
       <button className="mb-5 text-medium">Back</button>
@@ -100,7 +109,8 @@ function AuthorInfo({ author, iscurrentuser }) {
               <StarIcon className="w-10 h-10 text-yellow-400" />
             </div>
             <div className="text-medium font-['DM Sans'] leading-tight ml-3 mt-5">
-              PageDAO User since {new Date(author.firstVisit).toLocaleDateString("en-US", {
+              PageDAO User since{" "}
+              {new Date(author.firstVisit).toLocaleDateString("en-US", {
                 year: "numeric",
                 month: "long",
                 day: "numeric",
@@ -112,10 +122,14 @@ function AuthorInfo({ author, iscurrentuser }) {
           <div className="mb-4 mt-4">
             <div className="flex flex-col items-stretch">
               {providers.map((provider) => (
-                <UserProfileSocialAccount key={provider} provider={provider} />
+                <UserProfileSocialAccount
+                  key={provider}
+                  provider={provider}
+                  iscurrentuser={isCurrentUser}
+                />
               ))}
             </div>
-            {iscurrentuser && (
+            {isCurrentUser && (
               <button
                 className="bg-black hover:bg-gray-700 text-white font-bold py-2 px-3 mt-12 rounded text-medium"
                 style={{ whiteSpace: "nowrap" }}

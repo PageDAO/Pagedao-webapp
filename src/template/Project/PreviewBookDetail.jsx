@@ -132,6 +132,8 @@ function PreviewBookDetail({ projectIndex, itemIndex }) {
           "Minting NFT (check your wallet and confirm transaction )...",
         value: 75,
       });
+
+      // let's try to extract the data from this and send the tx to the server to execute
       const multicallResult = writeContract({
           address: contractAddress,
           abi: multiCallAbi,

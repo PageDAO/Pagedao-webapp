@@ -639,6 +639,7 @@ function AddBookDetail({ projectIndex, itemIndex }) {
                 Cover
               </div>
               <div
+                key={coverImage}
                 style={{ "--image-url": `url(${coverImage})` }}
                 className={
                   "relative bg-neutral-50 rounded-lg " +

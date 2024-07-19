@@ -209,23 +209,26 @@ function ItemView() {
     const fetchData = async () => {
       if (!item)
         try {
-          const result = await axios.get(
-            `${
-              import.meta.env.VITE_APP_BACKEND_API_URL
-            }/usermetadata?userid=${userId}`
-          );
-          const project = result.data.tasks.find(
-            (project) => project.id == projectId
-          );
+          axios
+            .get(
+              `${
+                import.meta.env.VITE_APP_BACKEND_API_URL
+              }/usermetadata?userid=${userId}`
+            )
+            .then((result) => {
+              const project = result.data.metadata.tasks.find(
+                (project) => project.id == projectId
+              );
 
-          setItem(project.items[itemId]);
-          setContract(
-            getContract({
-              client: client,
-              chain: twPolygon,
-              address: project.items[itemId].contracts[0].contractAddress,
-            })
-          );
+              setItem(project.items[itemId]);
+              setContract(
+                getContract({
+                  client: client,
+                  chain: twPolygon,
+                  address: project.items[itemId].contracts[0].contractAddress,
+                })
+              );
+            });
         } catch (error) {
           console.error("Error fetching project data", error);
         }
@@ -372,18 +375,21 @@ function ItemView() {
               </svg>
               1.2K
             </span>
-            {item && (<span
-              className="text-gray-400 inline-flex items-center leading-none text-sm mr-3 border-r-2 cursor-pointer"
-              onClick={() => {
-                navigator.clipboard.writeText(
-                  item.contracts[0].contractAddress
-                );
-                setToastMessage("Copied contract address to clipboard");
-              }}
-            >
-              <ClipboardIcon />
-              <span className="px-2">{item.contracts[0].contractAddress}</span>
-            </span>
+            {item && (
+              <span
+                className="text-gray-400 inline-flex items-center leading-none text-sm mr-3 border-r-2 cursor-pointer"
+                onClick={() => {
+                  navigator.clipboard.writeText(
+                    item.contracts[0].contractAddress
+                  );
+                  setToastMessage("Copied contract address to clipboard");
+                }}
+              >
+                <ClipboardIcon />
+                <span className="px-2">
+                  {item.contracts[0].contractAddress}
+                </span>
+              </span>
             )}
             <span className="text-gray-400 inline-flex items-center leading-none text-sm border-r-2 pr-2">
               <svg

@@ -1,5 +1,5 @@
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import AuthorInfo from './AuthorInfo';
@@ -19,12 +19,14 @@ function AuthorProfile() {
     useMemo(() => {
         const fetchAuthor = async () => {
             try {
-
                 //todo: refactor this to make the api url a config variable
                 axios.defaults.headers.get['Content-Type'] = 'application/json';
                 const response = await axios.get(import.meta.env.VITE_APP_BACKEND_API_URL+`/usermetadata?userid=${userId}`);
                 setAuthor(response.data);
                 console.log(response.data);
+                if (userId == response.data.id) {
+                    setIsCurrentUser(true);
+                }
             } catch (error) {
                 console.error('Failed to fetch author:', error);
             }
@@ -33,7 +35,6 @@ function AuthorProfile() {
         fetchAuthor();
 
     }, [userId]); // Re-run the effect when userId changes
-    
 
     return (
         <>
