@@ -6,20 +6,34 @@ import {
 } from "@dynamic-labs/sdk-react-core";
 import icon from "../../assets/icon.svg";
 import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { Menu as MenuIcon } from "lucide-react";
-import { PlusCircledIcon} from "@radix-ui/react-icons";
+import { PlusCircledIcon } from "@radix-ui/react-icons";
 import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
 
 function TopNav() {
   const isLoggedIn = useIsLoggedIn();
   const { user } = useDynamicContext();
-  const stats_xp = user.stats.xp;
-  const stats_invites = user.stats.invites;
+  const [userXP, setUserXP] = useState(0);
+  const [userLevel, setUserLevel] = useState(0);
+  const [userInvites, setUserInvites] = useState(0);
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      try {
+      setUserXP(user.metadata.xp);
+      setUserLevel(user.metadata.level);
+      setUserInvites(user.metadata.invites);
+      } catch (error) {
+        console.log("error", error);
+      }
+    }
+  }, [user, isLoggedIn]);
 
   return (
     <>
       <div className="container mx-auto pt-6 pb-4 justify-between items-center flex">
-      <div className="basis-1/50 items-center justify-center text-center flex">
+        <div className="basis-1/50 items-center justify-center text-center flex">
           <img src={icon} alt="icon" className="w-10 h-10" />
         </div>
         {/*}
@@ -27,15 +41,17 @@ function TopNav() {
           <Link to={"/marketplace"}>Marketplace</Link>
         </div>
         */}
-
-        <div className="basis-1/3 gap-2 flex justify-end">
-          <Link to="/" className="px-4 py-2 bg-red-50 rounded-lg">
-            My Books
-          </Link>
-
-          <div>
+        <div>
+          <div className="basis-1/3 gap-2 flex justify-end">
             {isLoggedIn ? (
-              <DynamicWidget />
+              <>
+              <button className="px-4 py-2 bg-red-50 rounded-lg">XP: {userXP}</button>
+              <button className="px-4 py-2 bg-red-50 rounded-lg">Invites: {userLevel}</button>
+                <Link to="/" className="px-4 py-2 bg-red-50 rounded-lg">
+                  My Books
+                </Link>
+                <DynamicWidget />
+              </>
             ) : (
               <DynamicConnectButton>
                 <div className="px-4 py-2 bg-red-50 rounded-lg">Connect</div>

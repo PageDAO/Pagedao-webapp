@@ -2,7 +2,7 @@ import { pinToIPFS } from "./pinToIPFS";
 import axios from "axios";
 
 const updateUserMetadata = async (newMetadata, oldMetadata, userUpdateFunction) => {
-  const metadata = { ...user.metadata };
+  const metadata = { ...oldMetadata };
   Object.keys(newMetadata).forEach((key) => {
     const metadataURI = saveMetadata(newMetadata[key]);
     metadata[key] = metadataURI;
