@@ -39,6 +39,7 @@
     "@reservoir0x/reservoir-kit-ui": "^2.5.3",
     "@tanstack/react-query": "^5.34.2",
     "@wagmi/core": "^2.6.4",
+    "@xstate/react": "^4.1.1",
     "axios": "^1.6.8",
     "classnames": "^2.5.1",
     "dotenv": "^16.4.1",
@@ -72,7 +73,8 @@
     "styled-components": "^6.1.11",
     "thirdweb": "^5.23.0",
     "viem": "^2.7.22",
-    "wagmi": "^2.5.7"
+    "wagmi": "^2.5.7",
+    "xstate": "^5.15.0"
   },
   "devDependencies": {
     "@babel/core": "^7.23.9",
