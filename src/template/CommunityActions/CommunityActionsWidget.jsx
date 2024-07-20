@@ -1,5 +1,3 @@
-// src/components/CommunityActions/CommunityActionsWidget.jsx
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 
@@ -14,7 +12,7 @@ const CommunityActionsWidget = () => {
         </svg>
       ),
       color: 'bg-blue-500',
-      link: './governance',
+      link: '/governance',
     },
     {
       title: 'Builder DAO Groups',

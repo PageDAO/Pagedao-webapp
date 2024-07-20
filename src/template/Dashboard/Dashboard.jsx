@@ -6,7 +6,7 @@ import Content from "./Content.jsx";
 import Header from "../Layout/Header.jsx";
 import Footer from "../Layout/Footer.jsx";
 import UpdateSection from "./UpdateSection.jsx";
-import CommunityActionsWidget from "../../components/CommunityActions/CommunityActionsWidget.jsx";
+import CommunityActionsWidget from "../CommunityActions/CommunityActionsWidget.jsx";
 
 function Dashboard() {
     return (
