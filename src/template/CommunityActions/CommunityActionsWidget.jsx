@@ -13,11 +13,11 @@ const CommunityActionsWidget = () => {
       link: '/creative-teams',
     },
     {
-      title: 'Book Clubs',
+      title: 'Reading Clubs',
       description: 'Engage in literary discussions',
       icon: '📚',
       color: 'bg-purple-500',
-      link: '/book-clubs',
+      link: '/reading-clubs',
     },
     {
       title: 'Governance',
