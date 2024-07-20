@@ -20,7 +20,7 @@ import Profile from './template/AuthorProfile/Profile.jsx';
 
 // Community Action imports
 import Governance from './template/CommunityActions/Governance.jsx';
-import BookClubs from './template/CommunityActions/BookClubs.jsx';
+import ReadingClubs from './template/CommunityActions/ReadingClubs.jsx';
 import DevelopmentTeams from './template/CommunityActions/DevelopmentTeams.jsx';
 import CreativeTeams from './template/CommunityActions/CreativeTeams.jsx';
 
@@ -93,8 +93,8 @@ function App() {
       element: <Governance />,
     },
     {
-      path: "/book-clubs",
-      element: <BookClubs />,
+      path: "/reading-clubs",
+      element: <ReadingClubs />,
     },
     {
       path: "/development-teams",
