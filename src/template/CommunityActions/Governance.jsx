@@ -1,23 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
 const Governance = () => {
   const [activeTab, setActiveTab] = useState('proposals');
+  const [members, setMembers] = useState([]);
+  const [proposals, setProposals] = useState([]);
+  const [votingPower, setVotingPower] = useState({});
+  const [recentActivity, setRecentActivity] = useState([]);
 
-  // Placeholder data - replace with actual data from backend/blockchain later
-  const proposals = [
-    { id: 1, title: 'Increase Book Publishing Budget', status: 'Active', votingEnds: '3 days' },
-    { id: 2, title: 'New Community Event Series', status: 'Active', votingEnds: '5 days' },
-    { id: 3, title: 'Update DAO Constitution', status: 'Passed', votingEnds: 'Ended' },
-  ];
+  useEffect(() => {
+    // Fetch data from backend
+    fetchMembers();
+    fetchProposals();
+    fetchVotingPower();
+    fetchRecentActivity();
+  }, []);
 
-  const treasury = {
-    totalValue: '1,000,000 PAGE',
-    distribution: [
-      { name: 'Community Pool', value: '500,000 PAGE' },
-      { name: 'Staking Rewards', value: '300,000 PAGE' },
-      { name: 'Development Fund', value: '200,000 PAGE' },
-    ]
+  const fetchMembers = async () => {
+    // TODO: Implement API call to get members who have staked $PAGE
+    // setMembers(response.data);
+  };
+
+  const fetchProposals = async () => {
+    // TODO: Implement API call to get active proposals
+    // setProposals(response.data);
+  };
+
+  const fetchVotingPower = async () => {
+    // TODO: Implement API call to get voting power overview
+    // setVotingPower(response.data);
+  };
+
+  const fetchRecentActivity = async () => {
+    // TODO: Implement API call to get recent governance activity
+    // setRecentActivity(response.data);
   };
 
   return (
@@ -33,10 +49,16 @@ const Governance = () => {
             Proposals
           </button>
           <button
-            className={`px-3 py-2 rounded-md ${activeTab === 'treasury' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-            onClick={() => setActiveTab('treasury')}
+            className={`px-3 py-2 rounded-md ${activeTab === 'members' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+            onClick={() => setActiveTab('members')}
           >
-            Treasury
+            Members
+          </button>
+          <button
+            className={`px-3 py-2 rounded-md ${activeTab === 'voting-power' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+            onClick={() => setActiveTab('voting-power')}
+          >
+            Voting Power
           </button>
         </nav>
       </div>
@@ -64,21 +86,41 @@ const Governance = () => {
         </div>
       )}
 
-      {activeTab === 'treasury' && (
+      {activeTab === 'members' && (
         <div>
-          <h2 className="text-2xl font-semibold mb-4">Treasury Overview</h2>
-          <p className="text-xl mb-4">Total Value: {treasury.totalValue}</p>
-          <h3 className="text-xl font-semibold mb-2">Distribution</h3>
+          <h2 className="text-2xl font-semibold mb-4">Members with Staked $PAGE</h2>
           <ul className="space-y-2">
-            {treasury.distribution.map((item, index) => (
-              <li key={index} className="flex justify-between">
-                <span>{item.name}</span>
-                <span>{item.value}</span>
+            {members.map((member, index) => (
+              <li key={index} className="flex justify-between items-center border-b py-2">
+                <span className="font-mono">{member.address}</span>
+                <span>{member.stakedAmount} $PAGE</span>
               </li>
             ))}
           </ul>
         </div>
       )}
+
+      {activeTab === 'voting-power' && (
+        <div>
+          <h2 className="text-2xl font-semibold mb-4">Voting Power Overview</h2>
+          <div className="bg-gray-100 p-4 rounded-lg">
+            <p>Total Staked: {votingPower.totalStaked} $PAGE</p>
+            <p>Your Stake: {votingPower.yourStake} $PAGE</p>
+            <p>Your Voting Power: {votingPower.yourVotingPower}%</p>
+          </div>
+        </div>
+      )}
+
+      <div className="mt-8">
+        <h2 className="text-2xl font-semibold mb-4">Recent Activity</h2>
+        <ul className="space-y-2">
+          {recentActivity.map((activity, index) => (
+            <li key={index} className="text-sm text-gray-600">
+              {activity.description} - {activity.timestamp}
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 };

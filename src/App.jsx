@@ -21,8 +21,8 @@ import Profile from './template/AuthorProfile/Profile.jsx';
 // Community Action imports
 import Governance from './template/CommunityActions/Governance.jsx';
 import BookClubs from './template/CommunityActions/BookClubs.jsx';
-import BuilderDAOGroups from './template/CommunityActions/BuilderDAOGroups.jsx';
-import CommunityActions from './template/CommunityActions/CommunityActions.jsx';
+import DevelopmentTeams from './template/CommunityActions/DevelopmentTeams.jsx';
+import CreativeTeams from './template/CommunityActions/CreativeTeams.jsx';
 
 function App() {
   const isLoggedIn = useIsLoggedIn();
@@ -97,12 +97,12 @@ function App() {
       element: <BookClubs />,
     },
     {
-      path: "/builder-dao-groups",
-      element: <BuilderDAOGroups />,
+      path: "/development-teams",
+      element: <DevelopmentTeams />,
     },
     {
-      path: "/community-actions",
-      element: <CommunityActions />,
+      path: "/creative-teams",
+      element: <CreativeTeams />,
     }
   ]);
 
