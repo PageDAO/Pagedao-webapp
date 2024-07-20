@@ -2,38 +2,22 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
 const Governance = () => {
-  const [activeTab, setActiveTab] = useState('proposals');
-  const [members, setMembers] = useState([]);
+  const [activeTab, setActiveTab] = useState('overview');
   const [proposals, setProposals] = useState([]);
-  const [votingPower, setVotingPower] = useState({});
-  const [recentActivity, setRecentActivity] = useState([]);
 
   useEffect(() => {
-    // Fetch data from backend
-    fetchMembers();
+    // Fetch proposals (to be implemented)
     fetchProposals();
-    fetchVotingPower();
-    fetchRecentActivity();
   }, []);
-
-  const fetchMembers = async () => {
-    // TODO: Implement API call to get members who have staked $PAGE
-    // setMembers(response.data);
-  };
 
   const fetchProposals = async () => {
     // TODO: Implement API call to get active proposals
-    // setProposals(response.data);
-  };
-
-  const fetchVotingPower = async () => {
-    // TODO: Implement API call to get voting power overview
-    // setVotingPower(response.data);
-  };
-
-  const fetchRecentActivity = async () => {
-    // TODO: Implement API call to get recent governance activity
-    // setRecentActivity(response.data);
+    // For now, we'll use dummy data
+    setProposals([
+      { id: 1, title: 'Increase Book Publishing Budget', status: 'Active', votingEnds: '3 days' },
+      { id: 2, title: 'New Community Event Series', status: 'Active', votingEnds: '5 days' },
+      { id: 3, title: 'Update DAO Constitution', status: 'Passed', votingEnds: 'Ended' },
+    ]);
   };
 
   return (
@@ -43,29 +27,52 @@ const Governance = () => {
       <div className="mb-6">
         <nav className="flex space-x-4">
           <button
+            className={`px-3 py-2 rounded-md ${activeTab === 'overview' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+            onClick={() => setActiveTab('overview')}
+          >
+            Overview
+          </button>
+          <button
             className={`px-3 py-2 rounded-md ${activeTab === 'proposals' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
             onClick={() => setActiveTab('proposals')}
           >
             Proposals
           </button>
           <button
-            className={`px-3 py-2 rounded-md ${activeTab === 'members' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-            onClick={() => setActiveTab('members')}
+            className={`px-3 py-2 rounded-md ${activeTab === 'voting' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+            onClick={() => setActiveTab('voting')}
           >
-            Members
-          </button>
-          <button
-            className={`px-3 py-2 rounded-md ${activeTab === 'voting-power' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-            onClick={() => setActiveTab('voting-power')}
-          >
-            Voting Power
+            Voting
           </button>
         </nav>
       </div>
 
+      {activeTab === 'overview' && (
+        <div className="space-y-6">
+          <section>
+            <h2 className="text-2xl font-semibold mb-2">What is Governance?</h2>
+            <p>Governance is the process by which we, as a community, make decisions about the future of PageDAO. It allows all members to have a say in important matters such as budget allocation, new initiatives, and changes to our rules.</p>
+          </section>
+          <section>
+            <h2 className="text-2xl font-semibold mb-2">How It Works</h2>
+            <ol className="list-decimal list-inside space-y-2">
+              <li><strong>Propose:</strong> Any member can create a proposal for a change or new initiative.</li>
+              <li><strong>Discuss:</strong> The community discusses the proposal, asking questions and suggesting improvements.</li>
+              <li><strong>Vote:</strong> After discussion, members vote on whether to accept or reject the proposal.</li>
+              <li><strong>Implement:</strong> If a proposal passes, it's implemented by the community.</li>
+            </ol>
+          </section>
+          <section>
+            <h2 className="text-2xl font-semibold mb-2">Your Voting Power</h2>
+            <p>Your voting power is determined by the amount of $PAGE tokens you have staked. The more tokens you stake, the more influence you have in the voting process.</p>
+          </section>
+        </div>
+      )}
+
       {activeTab === 'proposals' && (
         <div>
           <h2 className="text-2xl font-semibold mb-4">Active Proposals</h2>
+          <p className="mb-4">Here you can view all current proposals and their status. Click on a proposal to see more details and cast your vote.</p>
           <ul className="space-y-4">
             {proposals.map((proposal) => (
               <li key={proposal.id} className="border rounded-lg p-4">
@@ -73,7 +80,7 @@ const Governance = () => {
                 <p className="text-gray-600">Status: {proposal.status}</p>
                 <p className="text-gray-600">Voting ends: {proposal.votingEnds}</p>
                 <Link to={`/governance/proposal/${proposal.id}`} className="text-blue-500 hover:underline">
-                  View Details
+                  View Details and Vote
                 </Link>
               </li>
             ))}
@@ -86,41 +93,33 @@ const Governance = () => {
         </div>
       )}
 
-      {activeTab === 'members' && (
+      {activeTab === 'voting' && (
         <div>
-          <h2 className="text-2xl font-semibold mb-4">Members with Staked $PAGE</h2>
-          <ul className="space-y-2">
-            {members.map((member, index) => (
-              <li key={index} className="flex justify-between items-center border-b py-2">
-                <span className="font-mono">{member.address}</span>
-                <span>{member.stakedAmount} $PAGE</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {activeTab === 'voting-power' && (
-        <div>
-          <h2 className="text-2xl font-semibold mb-4">Voting Power Overview</h2>
-          <div className="bg-gray-100 p-4 rounded-lg">
-            <p>Total Staked: {votingPower.totalStaked} $PAGE</p>
-            <p>Your Stake: {votingPower.yourStake} $PAGE</p>
-            <p>Your Voting Power: {votingPower.yourVotingPower}%</p>
+          <h2 className="text-2xl font-semibold mb-4">How to Vote</h2>
+          <ol className="list-decimal list-inside space-y-4">
+            <li>
+              <strong>Connect Your Wallet:</strong> Ensure your wallet (containing your $PAGE tokens) is connected to the platform.
+            </li>
+            <li>
+              <strong>Review Proposals:</strong> Go through the list of active proposals and click on the ones you're interested in.
+            </li>
+            <li>
+              <strong>Cast Your Vote:</strong> After reviewing a proposal, you can vote 'Yes', 'No', or 'Abstain'.
+            </li>
+            <li>
+              <strong>Confirm Transaction:</strong> Voting requires a small transaction on the blockchain to be recorded. Confirm this in your wallet.
+            </li>
+          </ol>
+          <div className="mt-6 bg-blue-100 border-l-4 border-blue-500 p-4">
+            <p className="font-semibold">Remember:</p>
+            <ul className="list-disc list-inside">
+              <li>You can change your vote until the voting period ends.</li>
+              <li>Your voting power is based on your staked $PAGE tokens.</li>
+              <li>Participate in discussions to make informed decisions!</li>
+            </ul>
           </div>
         </div>
       )}
-
-      <div className="mt-8">
-        <h2 className="text-2xl font-semibold mb-4">Recent Activity</h2>
-        <ul className="space-y-2">
-          {recentActivity.map((activity, index) => (
-            <li key={index} className="text-sm text-gray-600">
-              {activity.description} - {activity.timestamp}
-            </li>
-          ))}
-        </ul>
-      </div>
     </div>
   );
 };
