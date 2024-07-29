@@ -1,6 +1,6 @@
 import './App.css'
 import Login from "./template/Login.jsx";
-import {createBrowserRouter, RouterProvider,} from "react-router-dom";
+import {createBrowserRouter, RouterProvider, ScrollRestoration} from "react-router-dom";
 import {useIsLoggedIn} from "@dynamic-labs/sdk-react-core";
 import React from "react";
 import Dashboard from "./template/Dashboard/Dashboard.jsx";
@@ -85,7 +85,9 @@ function App() {
 
     return (
         <>
-            <RouterProvider router={router} />
+            <RouterProvider router={router}>
+                <ScrollRestoration/>
+            </RouterProvider>
         </>
     )
 }

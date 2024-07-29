@@ -1,5 +1,5 @@
 // AuthorInfo.jsx
-import { useSocialAccounts } from "@dynamic-labs/sdk-react-core";
+import { useSocialAccounts, useIsLoggedIn, useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import { SocialIcon } from "@dynamic-labs/iconic";
 import { StarIcon } from "@radix-ui/react-icons";
 
@@ -21,6 +21,7 @@ const Icon = ({ provider }) => {
     </div>
   );
 };
+
 const UserProfileSocialAccount = ({ provider, iscurrentuser }) => {
   const {
     linkSocialAccount,
@@ -84,6 +85,8 @@ const providers = [
 ];
 
 function AuthorInfo({ author, isCurrentUser }) {
+  const { isLoggedIn } = useIsLoggedIn();
+  const { user } = useDynamicContext();
   return (
     <div>
       <button className="mb-5 text-medium">Back</button>
@@ -104,9 +107,9 @@ function AuthorInfo({ author, isCurrentUser }) {
           >
             {author.jobTitle}
           </div>
-          <div className="mt-10 flex justify-start items-center">
+          <div className="mt-10 pb-10 flex justify-start items-center">
             <div>
-              <StarIcon className="w-10 h-10 text-yellow-400" />
+              <StarIcon className="w-10 h-10 text-blue-400" />
             </div>
             <div className="text-medium font-['DM Sans'] leading-tight ml-3 mt-5">
               PageDAO User since{" "}
@@ -125,11 +128,11 @@ function AuthorInfo({ author, isCurrentUser }) {
                 <UserProfileSocialAccount
                   key={provider}
                   provider={provider}
-                  iscurrentuser={isCurrentUser}
+                  iscurrentuser={isCurrentUser && isLoggedIn && (user.id == author.id)}
                 />
               ))}
             </div>
-            {isCurrentUser && (
+            {isCurrentUser && isLoggedIn && (user.id == author.id) && (
               <button
                 className="bg-black hover:bg-gray-700 text-white font-bold py-2 px-3 mt-12 rounded text-medium"
                 style={{ whiteSpace: "nowrap" }}

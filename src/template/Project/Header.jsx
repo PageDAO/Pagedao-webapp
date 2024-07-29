@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { useState, useContext } from "react";
-import { useUserUpdateRequest } from "@dynamic-labs/sdk-react-core";
+import { useDynamicContext, useUserUpdateRequest } from "@dynamic-labs/sdk-react-core";
 import { TasksContext, TasksDispatchContext } from "../Providers/TasksContext";
 
 function Header({
@@ -14,6 +14,7 @@ function Header({
   const { updateUser } = useUserUpdateRequest();
   const projects = useContext(TasksContext);
   const dispatch = useContext(TasksDispatchContext);
+  const user = useDynamicContext();
 
   const handleTitleClick = () => {
     setIsEditing(true);
@@ -30,6 +31,7 @@ function Header({
     dispatch({
       type: "changed",
       task: projects[projectIndex].id,
+      metadata: user.metadata,
       userUpdateFunction: updateUser,
     });
     console.log("Title changed to:", title);

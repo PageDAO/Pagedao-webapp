@@ -10,7 +10,7 @@ import {
   TasksDispatchContext,
 } from "../Providers/TasksContext.js";
 import * as Toast from "@radix-ui/react-toast";
-import { useUserUpdateRequest } from "@dynamic-labs/sdk-react-core";
+import { useUserUpdateRequest, useDynamicContext } from "@dynamic-labs/sdk-react-core";
 
 function Content() {
   const [modalIsOpen, setIsOpen] = React.useState(false);
@@ -21,6 +21,7 @@ function Content() {
   const tasks = useContext(TasksContext);
   const dispatch = useContext(TasksDispatchContext);
   const { updateUser } = useUserUpdateRequest();
+  const user = useDynamicContext();
 
 
   React.useEffect(() => {
@@ -56,6 +57,7 @@ function Content() {
       dispatch({
         type: "deleted",
         id: id,
+        metadata: user.metadata,
         userUpdateFunction: updateUser,
       });
       setToastMessage("Project deleted");

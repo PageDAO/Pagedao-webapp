@@ -78,7 +78,7 @@ function ProjectDetail({ projectIndex }) {
           </div>
 
           <div className="basis-1/4 w-full">
-            <ProjectStats />
+            <ProjectStats projectIndex={projectIndex}/>
           </div>
         </div>
       </div>
