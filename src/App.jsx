@@ -1,4 +1,10 @@
 import './App.css'
+<<<<<<< HEAD
+=======
+import Login from "./template/Login.jsx";
+import {createBrowserRouter, RouterProvider, ScrollRestoration} from "react-router-dom";
+import {useIsLoggedIn} from "@dynamic-labs/sdk-react-core";
+>>>>>>> origin/main
 import React from "react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { useIsLoggedIn } from "@dynamic-labs/sdk-react-core";
@@ -106,11 +112,21 @@ function App() {
     }
   ]);
 
+<<<<<<< HEAD
   return (
     <>
       <RouterProvider router={router} />
     </>
   )
+=======
+    return (
+        <>
+            <RouterProvider router={router}>
+                <ScrollRestoration/>
+            </RouterProvider>
+        </>
+    )
+>>>>>>> origin/main
 }
 
 export default App

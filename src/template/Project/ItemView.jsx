@@ -206,42 +206,10 @@ function ItemView() {
 
   // retrieve the project information from the backend
   React.useMemo(() => {
-    const fetchData = async () => {
-      if (!item)
-        try {
-          axios
-            .get(
-              `${
-                import.meta.env.VITE_APP_BACKEND_API_URL
-              }/usermetadata?userid=${userId}`
-            )
-            .then((result) => {
-              const project = result.data.metadata.tasks.find(
-                (project) => project.id == projectId
-              );
-
-              setItem(project.items[itemId]);
-              setContract(
-                getContract({
-                  client: client,
-                  chain: twPolygon,
-                  address: project.items[itemId].contracts[0].contractAddress,
-                })
-              );
-            });
-        } catch (error) {
-          console.error("Error fetching project data", error);
-        }
-    };
-    fetchData();
-  }, [item, userId, itemId, projectId]);
-
-  // retrieve the secret document from the backend
-  React.useMemo(() => {
-    if (!secretDocument && dynamicJwtToken && item) {
+    const retrieveSecretDocument = () => {
       const queryURL = `${
         import.meta.env.VITE_APP_BACKEND_API_URL
-      }/retrieve?userid=${userId}&projectid=${projectId}&itemid=${item.id}`;
+      }/retrieve?userid=${userId}&projectid=${projectId}&itemid=${itemId}`;
       console.log("fetch projects queryURL: ", queryURL);
 
       axios
@@ -258,8 +226,44 @@ function ItemView() {
         .catch((error) => {
           console.warn(error);
         });
-    }
-  }, [projectId, item, dynamicJwtToken, userId, secretDocument]);
+    };
+    const fetchData = async () => {
+      try {
+        axios
+          .get(
+            `${
+              import.meta.env.VITE_APP_BACKEND_API_URL
+            }/usermetadata?userid=${userId}`
+          )
+          .then((result) => {
+            const project = result.data.metadata.tasks.find(
+              (project) => project.id == projectId
+            );
+            console.log("found project:", project);
+            const items = project.items.filter((item) => item.id == itemId);
+            console.log("found items:", items);
+            console.log(item);
+
+            const contractAddress = items[0].contracts[0].contractAddress;
+            console.log("found contractAddress: ", contractAddress);
+
+            setContract(
+              getContract({
+                client: client,
+                chain: twPolygon,
+                address: contractAddress,
+              })
+            );
+            setItem(items[0]);
+            retrieveSecretDocument();
+          });
+      } catch (error) {
+        console.error("Error fetching project data", error);
+      }
+    };
+    if (!item) fetchData();
+  }, [item, userId, itemId, projectId, client, dynamicJwtToken]);
+
   /*
   React.useEffect(() => {
     if (account && account.address && contract)
@@ -278,29 +282,34 @@ function ItemView() {
 
   return (
     <>
-      <TopNav />
+      <TopNav item={item} />
       <Toast.Provider>
         <div className="w-full bg-neutral-100">
           {docContents && (
-            <PDFViewer
-              url={docContents}
-              mode="scrolling"
-              config={{
-                relationVocabulary: ["located_at", "observed_at"],
-              }}
-              onAnnotationCreate={(annotation) => {
-                console.log("Annotation created", annotation);
-              }}
-              onAnnotationUpdate={(annotation) => {
-                console.log("Annotation updated", annotation);
-              }}
-              onAnnotationDelete={(annotation) => {
-                console.log("Annotation deleted", annotation);
-              }}
-              onSelection={(selection) => {
-                console.log("Selection", selection);
-              }}
-            />
+            <>
+              <PDFViewer
+                url={docContents}
+                mode="paginated"
+                debug={false}
+                scale={0.5}
+                config={{
+                  relationVocabulary: ["located_at", "observed_at"],
+                  debug: false,
+                }}
+                onAnnotationCreate={(annotation) => {
+                  console.log("Annotation created", annotation);
+                }}
+                onAnnotationUpdate={(annotation) => {
+                  console.log("Annotation updated", annotation);
+                }}
+                onAnnotationDelete={(annotation) => {
+                  console.log("Annotation deleted", annotation);
+                }}
+                onSelection={(selection) => {
+                  console.log("Selection", selection);
+                }}
+              />
+            </>
           )}
           {item ? (
             <iframe
@@ -379,6 +388,7 @@ function ItemView() {
               <span
                 className="text-gray-400 inline-flex items-center leading-none text-sm mr-3 border-r-2 cursor-pointer"
                 onClick={() => {
+                  setToastMessage("Copied contract address to clipboard");
                   navigator.clipboard.writeText(
                     item.contracts[0].contractAddress
                   );

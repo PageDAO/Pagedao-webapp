@@ -3,7 +3,6 @@ import React, { useMemo, useContext } from "react";
 import ProjectModal from "../Project/ProjectModal.jsx";
 
 import * as Toast from "@radix-ui/react-toast";
-import { useUserUpdateRequest } from "@dynamic-labs/sdk-react-core";
 
 function ProjectView() {
   const [modalIsOpen, setIsOpen] = React.useState(false);

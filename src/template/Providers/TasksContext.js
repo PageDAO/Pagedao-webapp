@@ -6,7 +6,7 @@ import { pinToIPFS } from "../Utils";
 export const TasksContext = createContext(null);
 export const TasksDispatchContext = createContext(null);
 
-export async function saveMetadata(tasks) {
+export async function saveMetadata(tasks, metadata) {
   const file = new File(
     [JSON.stringify({ tasks: tasks })],
     "userMetadata.json",
@@ -19,7 +19,7 @@ export async function saveMetadata(tasks) {
     "userMetadata.json",
     import.meta.env.VITE_APP_IPFS_API_URL
   );
-  return { metadata: { hash: metadataHash } };
+  return { metadata: {...metadata, hash: metadataHash} };
 }
 
 export function TasksProvider({ children }) {
@@ -75,9 +75,9 @@ export function TasksProvider({ children }) {
 }
 
 function tasksReducer(tasks, action) {
-  const saveIfNecessary = (userUpdateFunction, newTasks) => {
+  const saveIfNecessary = (userUpdateFunction, newTasks, metadata) => {
     if (userUpdateFunction)
-      saveMetadata(newTasks).then((value) => {
+      saveMetadata(newTasks, metadata).then((value) => {
         userUpdateFunction(
           value,
           import.meta.env.VITE_APP_DYNAMIC_ENVIRONMENT_ID
@@ -101,7 +101,7 @@ function tasksReducer(tasks, action) {
           done: false,
         },
       ];
-      saveIfNecessary(action.userUpdateFunction, newTasks);
+      saveIfNecessary(action.userUpdateFunction, newTasks, action.metadata);
       return newTasks;
     }
     case "changed": {
@@ -112,12 +112,12 @@ function tasksReducer(tasks, action) {
           return t;
         }
       });
-      saveIfNecessary(action.userUpdateFunction, newTasks);
+      saveIfNecessary(action.userUpdateFunction, newTasks, action.metadata);
       return newTasks;
     }
     case "deleted": {
       const newTasks = tasks.filter((t) => t.id !== action.id);
-      saveIfNecessary(action.userUpdateFunction, newTasks);
+      saveIfNecessary(action.userUpdateFunction, newTasks, action.metadata);
       return newTasks;
     }
     case "projectItemAdded": {
@@ -133,7 +133,7 @@ function tasksReducer(tasks, action) {
           return p;
         }
       });
-      saveIfNecessary(action.userUpdateFunction, newTasks);
+      saveIfNecessary(action.userUpdateFunction, newTasks, action.metadata);
       return newTasks;
     }
     case "projectItemChanged": {
@@ -153,7 +153,7 @@ function tasksReducer(tasks, action) {
           return p;
         }
       });
-      saveIfNecessary(action.userUpdateFunction, newTasks);
+      saveIfNecessary(action.userUpdateFunction, newTasks, action.metadata);
       return newTasks;
     }
     default: {

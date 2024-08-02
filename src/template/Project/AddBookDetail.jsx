@@ -25,7 +25,16 @@ import ReactWindowedSelect from "../../components/ReactWindowedSelect";
 import ItemCreationModal from "./ItemCreationModal";
 import { createThirdwebClient } from "thirdweb";
 import { upload } from "thirdweb/storage";
-import { BlockTypeSelect, BoldItalicUnderlineToggles, CreateLink, imagePlugin, InsertImage, linkDialogPlugin, MDXEditor, toolbarPlugin } from "@mdxeditor/editor";
+import {
+  BlockTypeSelect,
+  BoldItalicUnderlineToggles,
+  CreateLink,
+  imagePlugin,
+  InsertImage,
+  linkDialogPlugin,
+  MDXEditor,
+  toolbarPlugin,
+} from "@mdxeditor/editor";
 import { headingsPlugin } from "@mdxeditor/editor";
 
 import "@mdxeditor/editor/style.css";
@@ -44,6 +53,7 @@ function AddBookDetail({ projectIndex, itemIndex }) {
   const [coverImageType, setCoverImageType] = useState("");
   const [isHovering, setIsHovering] = useState(false);
   const [allowPreview, setAllowPreview] = useState(false);
+  const [addCover, setAddCover] = useState(true);
   const [percentagePreview, setPercentagePreview] = useState(10);
   const [bookName, setBookName] = useState("");
   const [description, setDescription] = useState("");
@@ -103,6 +113,11 @@ function AddBookDetail({ projectIndex, itemIndex }) {
     }
   }, [projects, projectIndex, itemIndex]);
 
+  useEffect(() => {
+    document.body.style.setProperty("--image-url", coverImage);
+    console.log("setting cover image url css variable", coverImage);
+  }, [coverImage]);
+
   const uploadButtonClasses = {
     "px-14 py-24 flex-col justify-start items-center gap-4 inline-flex": true,
     "bg-neutral-50 bg-opacity-50": isHovering,
@@ -117,10 +132,6 @@ function AddBookDetail({ projectIndex, itemIndex }) {
     }, 200);
   }
 
-  useEffect(() => {
-    console.log("updating cover image", coverImage);
-  }, [coverImage]);
-
   // todo: load form values if the itemIndex is not null
   const handleImageUpload = async (event) => {
     const file = event.target.files[0];
@@ -134,8 +145,10 @@ function AddBookDetail({ projectIndex, itemIndex }) {
         ipfsURI.substring(7);
       setCoverImage(uri);
       setCoverImageType(file.type);
+
       console.log("set the cover image", coverImage);
-      setChanges({ pdfData: changes.pdfData, coverImage: true });
+
+      setChanges({ pdfData: true, coverImage: true });
       setIsHovering(false);
       setIsModified(true);
 
@@ -152,6 +165,10 @@ function AddBookDetail({ projectIndex, itemIndex }) {
       reader.readAsDataURL(file);
       */
     }
+  };
+
+  const handleAddCover = (event) => {
+    setAddCover(event.target.checked);
   };
 
   const handlePdfUpload = (event) => {
@@ -191,6 +208,16 @@ function AddBookDetail({ projectIndex, itemIndex }) {
     );
   };
 
+  async function createModifiedPdf() {
+    const modifiedPDF = await modifyPdf(
+      pdfData,
+      coverImage,
+      percentagePreview,
+      addCover
+    );
+    return modifiedPDF;
+  }
+
   async function saveDraftAndReturn() {
     setOpenProgress(true);
     const result = await saveDraft();
@@ -215,7 +242,7 @@ function AddBookDetail({ projectIndex, itemIndex }) {
     if (!supply) {
       message += "Supply is missing. ";
     }
-    if (!pdfData && !filename && !projects[projectIndex].items[itemIndex].pdf) {
+    if (!pdfData && !filename &&  !projects[projectIndex].items.length>0 && !projects[projectIndex].items[itemIndex].pdf) {
       message += "PDF data is missing. ";
     }
     if (!coverImage) {
@@ -241,6 +268,7 @@ function AddBookDetail({ projectIndex, itemIndex }) {
         type: "projectItemAdded",
         id: projects[projectIndex].id,
         item: projectItem,
+        metadata: user.metadata,
         userUpdateFunction: updateUser,
       });
     } else {
@@ -248,6 +276,7 @@ function AddBookDetail({ projectIndex, itemIndex }) {
         type: "projectItemChanged",
         id: projects[projectIndex].id,
         item: projectItem,
+        metadata: user.metadata,
         userUpdateFunction: updateUser,
       });
     }
@@ -277,7 +306,7 @@ function AddBookDetail({ projectIndex, itemIndex }) {
     setProgressMsg({ message: "Creating viewable PDF", value: 40 });
     const { modifiedPDF, pageCount, previewPages } =
       changes.pdfData || !itemIndex
-        ? await modifyPdf(pdfData, coverImage, percentagePreview)
+        ? await modifyPdf(pdfData, coverImage, percentagePreview, addCover)
         : {
             modifiedPDF: null,
             pageCount: projects[projectIndex].items[itemIndex].pages,
@@ -479,7 +508,12 @@ function AddBookDetail({ projectIndex, itemIndex }) {
     }
   };
 
-  const modifyPdf = async function (pdfData, coverImage, percentagePreview) {
+  const modifyPdf = async function (
+    pdfData,
+    coverImage,
+    percentagePreview,
+    addCover
+  ) {
     const existingPdfBytes = pdfData; //await fetch(pdfURL).then((res) =>res.arrayBuffer());
     const coverType = coverImageType.substring("image/".length); //coverImage.match(/[^:/]\w+(?=;|,)/)[0];
     const coverImageBytes = await fetch(coverImage).then((res) =>
@@ -501,23 +535,24 @@ function AddBookDetail({ projectIndex, itemIndex }) {
     //embed the image and try the opposite if it doesn't work
     if (coverType == "png") {
       try {
-      cover = await pdfDoc.embedPng(coverImageBytes);
+        cover = await pdfDoc.embedPng(coverImageBytes);
       } catch (error) {
         cover = await pdfDoc.embedJpg(coverImageBytes);
         setCoverImageType("jpg");
       }
     } else {
       try {
-      cover = await pdfDoc.embedJpg(coverImageBytes);
+        cover = await pdfDoc.embedJpg(coverImageBytes);
       } catch (error) {
         cover = await pdfDoc.embedPng(coverImageBytes);
         setCoverImageType("png");
       }
     }
+    console.log("cover", cover);
 
     const coverImg = (img, page, pageObject, type) => {
-      const imgRatio = img.height / img.width;
-      const pageRatio = page.width / page.width;
+      const imgRatio = (img.height * 1.0) / img.width;
+      const pageRatio = (page.height * 1.0) / page.width;
       if (
         (imgRatio < pageRatio && type === "contain") ||
         (imgRatio > pageRatio && type === "cover")
@@ -543,15 +578,16 @@ function AddBookDetail({ projectIndex, itemIndex }) {
         });
       }
     };
-    coverImg(
-      cover,
-      { width: width, height: height },
-      pdfDoc.insertPage(0, [width, height]),
-      "cover"
-    );
+    if (addCover)
+      coverImg(
+        cover,
+        { width: width, height: height },
+        pdfDoc.insertPage(0, [width, height]),
+        "cover"
+      );
 
     // removePages
-    for (let i = pages.length; i > previewLength; i--) {
+    for (let i = pages.length-1; i > previewLength; i--) {
       pdfDoc.removePage(i);
     }
 
@@ -638,9 +674,9 @@ function AddBookDetail({ projectIndex, itemIndex }) {
               <div className="text-neutral-800 text-2xl font-bold font-['Arvo'] leading-normal">
                 Cover
               </div>
+              <style></style>
               <div
                 key={coverImage}
-                style={{ "--image-url": `url(${coverImage})` }}
                 className={
                   "relative bg-neutral-50 rounded-lg " +
                   (!coverImage
@@ -661,9 +697,10 @@ function AddBookDetail({ projectIndex, itemIndex }) {
                   style={{ display: "none" }}
                   accept="image/*"
                 />
+
                 <div
                   className={
-                    "w-full h-full flex-col justify-center items-center gap-4 inline-flex " +
+                    "absolute inset-0 z-10 w-full h-full flex-col justify-center items-center gap-4 inline-flex " +
                     (isHovering ? "bg-neutral-50 bg-opacity-90" : "") +
                     (coverImage && !isHovering ? "hidden" : "")
                   }
@@ -673,6 +710,8 @@ function AddBookDetail({ projectIndex, itemIndex }) {
                     {!coverImage ? "Upload" : "Change"} your cover image
                   </div>
                 </div>
+                {coverImage && (<img src={coverImage} className="relative h-full w-full object-cover rounded-lg"/>)}
+
               </div>
             </div>
             <div className="flex-col justify-start items-start gap-12 inline-flex w-full">
@@ -712,6 +751,18 @@ function AddBookDetail({ projectIndex, itemIndex }) {
                             placeholder={filename}
                           />
                         </div>
+                      </div>
+                      <div className="relative">
+                        <label htmlFor="add_cover">
+                          Add cover image to preview pdf&nbsp;
+                          <input
+                            id="add_cover"
+                            onChange={handleAddCover}
+                            type="checkbox"
+                            className="bigCheckBox"
+                            checked={addCover}
+                          />
+                        </label>
                       </div>
                     </div>
                   </div>
@@ -980,6 +1031,14 @@ function AddBookDetail({ projectIndex, itemIndex }) {
                 </div>
               ) : (
                 <div className="self-stretch justify-start items-start gap-4 inline-flex">
+                    <div className="justify-center items-center gap-1 flex">
+                    <button
+                      className="px-16 py-3 rounded-lg border border-neutral-800 text-neutral-800 text-base font-bold font-['DM Sans'] leading-snug cursor-pointer"
+                      onClick={createModifiedPdf}
+                    >
+                      Create Modified PDF
+                    </button>
+                  </div>
                   <div className="justify-center items-center gap-1 flex">
                     <button
                       className="px-16 py-3 rounded-lg border border-neutral-800 text-neutral-800 text-base font-bold font-['DM Sans'] leading-snug cursor-pointer"

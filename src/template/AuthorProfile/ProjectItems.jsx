@@ -16,7 +16,7 @@ function ProjectItems({ author, project }) {
               key={item.id}
               className="w-full max-w-sm bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700"
             >
-              <a href="#">
+              <Link to={"/book/" + author.id + "/" + project.id + "/" + item.id}>
                 <img
                   className="h-auto max-w-full rounded-lg"
                   src={
@@ -28,7 +28,7 @@ function ProjectItems({ author, project }) {
                   }
                   alt="cover image"
                 />
-              </a>
+              </Link>
               <div className="px-5 pb-5">
                 <Link
                   to={

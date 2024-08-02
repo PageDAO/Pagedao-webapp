@@ -97,8 +97,6 @@ function PreviewBookDetail({ projectIndex, itemIndex }) {
   const [contractAddress, setContractAddress] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isMinting, setIsMinting] = useState(false);
-  const [isMinted, setIsMinted] = useState(false);
-  const [lazyMintParams, setLazyMintParams] = useState([]);
   const [project, setProject] = useState({});
   const [item, setItem] = useState({});
   const navigate = useNavigate();
@@ -114,42 +112,14 @@ function PreviewBookDetail({ projectIndex, itemIndex }) {
     value: 0,
   });
 
-  const multiCallAbi = [
-    {
-      type: "function",
-      name: "multicall",
-      inputs: [{ type: "bytes[]", name: "data" }],
-      outputs: [{ type: "bytes[]", name: "results" }],
-      stateMutability: "nonpayable",
-    },
-  ];
+  const CreateNFT = (contractAddress) => {
+    console.log("creating NFT...", contractAddress, isMinting);
+    if (!contractAddress) {
+      console.log("no contract address");
+      return;
+    }
 
-  useEffect(() => {
-    console.log("calling multicall", lazyMintParams, isMinting);
-    if (lazyMintParams.length > 0 && isMinting) { 
-      setProgressMsg({
-        message:
-          "Minting NFT (check your wallet and confirm transaction )...",
-        value: 75,
-      });
-
-      // let's try to extract the data from this and send the tx to the server to execute
-      const multicallResult = writeContract({
-          address: contractAddress,
-          abi: multiCallAbi,
-          functionName: "multicall",
-          args: [[...lazyMintParams]],
-        });
-      setIsMinted(true);
-        return multicallResult;
-      }
-  }, [contractAddress, lazyMintParams, isMinting]);
-
-  const CreateNFT = () => {
-    if (!(contractAddress && isMinting)) return;
-
-    setIsMinting(false);
-
+    item.contracts[0].contractAddress = contractAddress;
     console.log("publishing:", contractAddress);
     const contract = getContract({
       client: client,
@@ -179,7 +149,38 @@ function PreviewBookDetail({ projectIndex, itemIndex }) {
       .data()
       .then((data) => {
         const mintParams = createLazyMintParams(item.supply, metadataURI, "0x");
-        setLazyMintParams([data,mintParams]);
+        setProgressMsg({
+          message:
+            "Minting NFT...",
+          value: 75,
+        });
+  
+        axios.post(`${import.meta.env.VITE_APP_BACKEND_API_URL}/mintnft`, {
+          contractAddress: item.contracts[0].contractAddress,
+          mintParams: [data, mintParams],
+        }).then((response) => {
+          console.log("response:", response.data.result);
+          if (response.data.result !== "error") {
+              item.status = "published";
+              console.log("successfully minted");
+              // do the dispatch here!!!
+              setIsMinting(false);
+              dispatch({
+                type: "projectItemChanged",
+                id: item.id,
+                item: item,
+                metadata: user.metadata,
+                userUpdateFunction: updateUser,
+              });
+              navigate("/book/publishing-done/" + projectIndex + "/" + itemIndex);
+          } else {
+            console.log("error minting:", response.data.result);
+            setProgressMsg({
+              message: "Error minting NFT",
+              value: 100,
+            });
+          }
+        });
       });
   };
 
@@ -224,75 +225,17 @@ function PreviewBookDetail({ projectIndex, itemIndex }) {
           if (response.data.result !== "error") {
             setContractAddress(response.data.result);
             item.contracts[0].contractAddress = response.data.result;
-            dispatch({
-              type: "projectItemChanged",
-              id: item.id,
-              item: item,
-              userUpdateFunction: updateUser,
-            });
             setIsMinting(true);
-            const contract = getContract({
-              client: client,
-              chain: polygon,
-              address: item.contracts[0].contractAddress,
-            });
-
-            const multiCallAbi = [
-              {
-                type: "function",
-                name: "multicall",
-                inputs: [{ type: "bytes[]", name: "data" }],
-                outputs: [{ type: "bytes[]", name: "results" }],
-                stateMutability: "nonpayable",
-              },
-            ];
-
-            const maxClaimableSupply = item.supply;
-            const pricePerToken = item.contracts[0].price;
-            const currency = USDCPolygonAddress;
-            const metadataURI =
-              "https://ipfs.nftbookbazaar.com/ipfs/" +
-              item.itemMetadataURI +
-              "?";
-
-            setProgressMsg({
-              message: "Creating claim conditions...",
-              value: 50,
-            });
-            setClaimConditions({
-              contract,
-              phases: [
-                {
-                  maxClaimableSupply: maxClaimableSupply,
-                  maxClaimablePerWallet: maxClaimableSupply,
-                  currencyAddress: currency,
-                  price: pricePerToken,
-                  startTime: new Date(),
-                },
-              ],
-            })
-              .data()
-              .then((data) => {
-                const mintParams = createLazyMintParams(
-                  item.supply,
-                  metadataURI,
-                  "0x"
-                );
-
-                setProgressMsg({
-                  message:
-                    "Minting NFT (check your wallet and confirm transaction )...",
-                  value: 75,
-                });
-                console.log("calling multicall", data, mintParams);
-                const multicallResult = writeContract({
-                  address: contractAddress,
-                  abi: multiCallAbi,
-                  functionName: "multicall",
-                  args: [[data, mintParams]],
-                });
-                return multicallResult;
-              });
+            setContractCreated(true);
+            CreateNFT(item.contracts[0].contractAddress);
+            item.status = "contract created";
+            // dispatch({
+            //   type: "projectItemChanged",
+            //   id: item.id,
+            //   item: item,
+            //   metadata: user.metadata,
+            //   userUpdateFunction: updateUser,
+            // });
           }
         });
     } else {
@@ -300,13 +243,13 @@ function PreviewBookDetail({ projectIndex, itemIndex }) {
         "contract created... trying to mint the nft and set claim conditions"
       );
       setIsMinting(true);
-      CreateNFT();
+      CreateNFT(contractAddress);
     }
   }
 
   // useMemo(CreateNFT, [isMinting]);
 
-  useEffect(() => {
+  useMemo(() => {
     if (
       primaryWallet &&
       projects &&
@@ -325,31 +268,8 @@ function PreviewBookDetail({ projectIndex, itemIndex }) {
       }
       console.log(item);
     }
-  }, [projects, primaryWallet, project, projectIndex, itemIndex, item]);
+  }, [projects, primaryWallet, projectIndex, itemIndex, item]);
 
-  useEffect(() => {
-    if (isMinted) {
-      dispatch({
-        type: "projectItemChanged",
-        id: item.id,
-        item: item,
-        userUpdateFunction: updateUser,
-      });
-      navigate("/book/publishing-done/" + projectIndex + "/" + itemIndex);
-    }
-  }, [isMinted, dispatch, updateUser, item]);
-
-  useMemo(() => {
-    if (status === "error") {
-      console.log("error minting:", failureReason);
-    }
-    if (status === "success") {
-      console.log("successfully minted");
-      // do the dispatch here!!!
-      setIsMinting(false);
-      setIsMinted(true);
-    }
-  }, [status, projectIndex, itemIndex]);
 
   return (
     <>

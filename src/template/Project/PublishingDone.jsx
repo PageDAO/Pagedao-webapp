@@ -36,7 +36,7 @@ function PublishingDone() {
             <div className="justify-center items-end gap-2 inline-flex">
               <div className="px-8 py-3 rounded-lg border border-neutral-800 justify-center items-center gap-1 flex">
                 <Link
-                    to={user && projects && projects[projectIndex] && ("/book/" + user.userId + "/" + projects[projectIndex].id + "/" + itemIndex)} 
+                    to={user && projects && projects[projectIndex] && ("/book/" + user.userId + "/" + projects[projectIndex].id + "/" + projects[projectIndex].items[itemIndex].id)} 
                     className="text-neutral-800 text-base font-bold font-['DM Sans'] leading-snug"
                 >
                   See on marketplace

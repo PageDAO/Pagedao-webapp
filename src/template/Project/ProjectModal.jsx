@@ -2,7 +2,7 @@ import { Book, XCircle } from "lucide-react";
 import { useContext } from "react";
 import Modal from "react-modal";
 //import CollaboratorsComponent from "../Forms/Collaborators.jsx";
-import { useUserUpdateRequest } from "@dynamic-labs/sdk-react-core";
+import { useUserUpdateRequest, useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import { TasksContext, TasksDispatchContext } from "../Providers/TasksContext";
 
 const customStyles = {
@@ -32,6 +32,7 @@ Modal.setAppElement("#root");
 function ProjectModal({ modalIsOpen, setIsOpen, type, itemID }) {
   const tasks = useContext(TasksContext);
   const dispatch = useContext(TasksDispatchContext);
+  const { user } = useDynamicContext();
   const { updateUser } = useUserUpdateRequest();
   //const [collaborators, setCollaborators] = useState([{address: ''}]);
 
@@ -58,6 +59,7 @@ function ProjectModal({ modalIsOpen, setIsOpen, type, itemID }) {
       description: data.description.value,
       nextItemID: 0,
       items: [],
+      metadata: user.metadata,
       userUpdateFunction: updateUser,
     });
     closeModal();
