@@ -141,7 +141,7 @@ function PreviewBookDetail({ projectIndex, itemIndex }) {
           maxClaimableSupply: maxClaimableSupply,
           maxClaimablePerWallet: maxClaimableSupply,
           currencyAddress: currency,
-          price: 0, //pricePerToken,
+          price: pricePerToken,
           startTime: new Date(),
         },
       ],

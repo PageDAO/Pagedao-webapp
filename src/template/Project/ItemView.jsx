@@ -43,8 +43,10 @@ import {
 import { createWalletAdapter } from "thirdweb/wallets";
 import { polygon as twPolygon } from "thirdweb/chains";
 import { pdfjs, PDFViewer } from "@recogito/recogito-react-pdf";
+//import PDFViewerCustom  from "../Viewer/PDFViewer.jsx"; // doing a ghetto monkeypatch of the recogito viewer
 import { ClipboardIcon } from "@radix-ui/react-icons";
 
+//const PDFViewer = new PDFViewerCustom();
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   "pdfjs-dist/build/pdf.worker.js",
   import.meta.url
@@ -204,29 +206,30 @@ function ItemView() {
     },
   ];
 
+  const retrieveSecretDocument = () => {
+    const queryURL = `${
+      import.meta.env.VITE_APP_BACKEND_API_URL
+    }/retrieve?userid=${userId}&projectid=${projectId}&itemid=${itemId}`;
+    console.log("fetch projects queryURL: ", queryURL);
+
+    axios
+      .get(queryURL, {
+        responseType: "arraybuffer",
+        headers: {
+          Authorization: `Bearer ${dynamicJwtToken}`,
+          Accept: "application/pdf",
+        },
+      })
+      .then((response) => {
+        setDocContents(response.data);
+      })
+      .catch((error) => {
+        console.warn(error);
+      });
+  };
+
   // retrieve the project information from the backend
   React.useMemo(() => {
-    const retrieveSecretDocument = () => {
-      const queryURL = `${
-        import.meta.env.VITE_APP_BACKEND_API_URL
-      }/retrieve?userid=${userId}&projectid=${projectId}&itemid=${itemId}`;
-      console.log("fetch projects queryURL: ", queryURL);
-
-      axios
-        .get(queryURL, {
-          responseType: "arraybuffer",
-          headers: {
-            Authorization: `Bearer ${dynamicJwtToken}`,
-            Accept: "application/pdf",
-          },
-        })
-        .then((response) => {
-          setDocContents(response.data);
-        })
-        .catch((error) => {
-          console.warn(error);
-        });
-    };
     const fetchData = async () => {
       try {
         axios
@@ -291,10 +294,11 @@ function ItemView() {
                 url={docContents}
                 mode="paginated"
                 debug={false}
-                scale={0.5}
+                scale={1}
                 config={{
                   relationVocabulary: ["located_at", "observed_at"],
                   debug: false,
+                  scale: 0.5
                 }}
                 onAnnotationCreate={(annotation) => {
                   console.log("Annotation created", annotation);
@@ -355,6 +359,12 @@ function ItemView() {
                     to: walletClient.account.address,
                     quantity: 1,
                   });
+                }}
+                onTransactionConfirmed={(receipt) => {
+                  setToastMessage("🎉 Purchase Completed");
+                  //somehow reload the item?
+                  retrieveSecretDocument();
+                  console.log("Transaction confirmed", receipt.transactionHash);
                 }}
                 onError={(error) => {
                   setToastMessage("Error claiming NFT: " + error.message);

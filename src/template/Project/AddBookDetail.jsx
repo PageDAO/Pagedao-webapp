@@ -21,6 +21,7 @@ import {
 } from "../Providers/TasksContext.js";
 import * as Toast from "@radix-ui/react-toast";
 import Select from "react-select";
+import CreatableSelect, { useCreatable } from 'react-select/creatable';
 import ReactWindowedSelect from "../../components/ReactWindowedSelect";
 import ItemCreationModal from "./ItemCreationModal";
 import { createThirdwebClient } from "thirdweb";
@@ -36,12 +37,38 @@ import {
   toolbarPlugin,
 } from "@mdxeditor/editor";
 import { headingsPlugin } from "@mdxeditor/editor";
-
+import { RangeSlider } from "flowbite-react";
 import "@mdxeditor/editor/style.css";
 
 const genreOptions = genreTags.map((item) => {
   return { value: item, label: item };
 });
+
+
+const groupStyles = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+};
+const groupBadgeStyles = {
+  backgroundColor: '#EBECF0',
+  borderRadius: '2em',
+  color: '#172B4D',
+  display: 'inline-block',
+  fontSize: 12,
+  fontWeight: 'normal',
+  lineHeight: '1',
+  minWidth: 1,
+  padding: '0.16666666666667em 0.5em',
+  textAlign: 'center',
+};
+
+const formatGroupLabel = (data) => (
+  <div style={groupStyles}>
+    <span>{data.label}</span>
+    <span style={groupBadgeStyles}>{data.options.length}</span>
+  </div>
+);
 
 function AddBookDetail({ projectIndex, itemIndex }) {
   const { isAuthenticated, user } = useDynamicContext();
@@ -117,11 +144,6 @@ function AddBookDetail({ projectIndex, itemIndex }) {
     document.body.style.setProperty("--image-url", coverImage);
     console.log("setting cover image url css variable", coverImage);
   }, [coverImage]);
-
-  const uploadButtonClasses = {
-    "px-14 py-24 flex-col justify-start items-center gap-4 inline-flex": true,
-    "bg-neutral-50 bg-opacity-50": isHovering,
-  };
 
   function showToastMessage(message) {
     setOpen(false);
@@ -334,6 +356,7 @@ function AddBookDetail({ projectIndex, itemIndex }) {
       description: description,
       backgroundImage: "/ipfs/QmY1RQ2AnRaSDMF2cewLbLZrZJEyojTB8C3gpLgVAZ6Buv",
       baseHref: "/ipfs/QmdpqLgSWdfFHExp4c9ARUtPxExxRrsoAT8Ume2RMjmgkQ/",
+      preview: (percentagePreview < 100),
     };
 
     const html = Buffer.from(generatePDFBookFromTemplate(options), "utf8");
@@ -578,18 +601,24 @@ function AddBookDetail({ projectIndex, itemIndex }) {
         });
       }
     };
-    if (addCover)
+    if (addCover) {
+      // blank interior cover page
+      pdfDoc.insertPage(0, [width, height]);
+
+      // cover page
       coverImg(
         cover,
         { width: width, height: height },
         pdfDoc.insertPage(0, [width, height]),
         "cover"
       );
+    }
 
     // removePages
-    for (let i = pages.length-1; i > previewLength; i--) {
-      pdfDoc.removePage(i);
-    }
+    if (percentagePreview < 100)
+     for (let i = pages.length-1; i > previewLength; i--) {
+        pdfDoc.removePage(i);
+      }
 
     const addPreviewDetailPage = (pdfDoc) => {
       return pdfDoc.addPage([width, height]);
@@ -824,7 +853,7 @@ function AddBookDetail({ projectIndex, itemIndex }) {
                         <div className="grow shrink basis-0 justify-start items-center gap-2.5 flex">
                           Type
                           <br />
-                          <Select
+                          <CreatableSelect
                             key={JSON.stringify(itemType)}
                             cacheOptions
                             className="w-full"
@@ -904,9 +933,8 @@ function AddBookDetail({ projectIndex, itemIndex }) {
                                 : tags
                             }
                             onChange={handleTagsChange}
-                            options={descriptorTags.map((itemtype) => {
-                              return { value: itemtype, label: itemtype };
-                            })}
+                            options={descriptorTags}
+                            formatGroupLabel={formatGroupLabel}
                           />
                         </div>
                       </div>
@@ -987,6 +1015,7 @@ function AddBookDetail({ projectIndex, itemIndex }) {
                       </div>
                       <div className="self-stretch justify-start items-start gap-1 inline-flex">
                         <div className="relative mt-2 w-full">
+                        <RangeSlider max={100} min={0} onChange={handleUpdatePreviewAmount} value={percentagePreview}/>
                           <input
                             type="text"
                             name="preview_amount"
@@ -1023,7 +1052,7 @@ function AddBookDetail({ projectIndex, itemIndex }) {
                       "/" +
                       projects[projectIndex].id +
                       "/" +
-                      itemIndex
+                      projects[projectIndex].items[itemIndex].id
                     }
                   >
                     View Published Item
@@ -1031,14 +1060,6 @@ function AddBookDetail({ projectIndex, itemIndex }) {
                 </div>
               ) : (
                 <div className="self-stretch justify-start items-start gap-4 inline-flex">
-                    <div className="justify-center items-center gap-1 flex">
-                    <button
-                      className="px-16 py-3 rounded-lg border border-neutral-800 text-neutral-800 text-base font-bold font-['DM Sans'] leading-snug cursor-pointer"
-                      onClick={createModifiedPdf}
-                    >
-                      Create Modified PDF
-                    </button>
-                  </div>
                   <div className="justify-center items-center gap-1 flex">
                     <button
                       className="px-16 py-3 rounded-lg border border-neutral-800 text-neutral-800 text-base font-bold font-['DM Sans'] leading-snug cursor-pointer"

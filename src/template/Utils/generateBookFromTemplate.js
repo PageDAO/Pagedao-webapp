@@ -1,3 +1,25 @@
+const previewText = `
+<div style="
+  position:fixed;
+  top:0;
+  right:0;
+  padding:0;
+  margin:0;
+  border-top: solid 75px rgb(200,30,50);
+  border-right: solid 75px rgb(200,30,50);
+  border-left: solid 75px transparent;
+  border-bottom: solid 75px transparent; 
+  display: inline-block; 
+  z-index: 99998"></div>
+<span style="transform: rotate(45deg);
+  font-family:sans-serif;
+  z-index: 99999;
+  font-size: 16pt;
+  position: fixed;
+  top: 55px;
+  right:10px;
+  color: #fff;">PREVIEW</span>`;
+
 const generatePDFBookFromTemplate = (options) => {
   /**
    * Accepts an options object with properties:
@@ -53,6 +75,8 @@ const generatePDFBookFromTemplate = (options) => {
 <meta name="og:type" content="website">
 </head>
 <body>
+
+${options.preview?previewText:''}
 
 <div class="PDFFlip" id="PDFF" source="${options.pdfURL}"></div>
 

@@ -26,7 +26,8 @@ function AuthorProfile() {
         );
         setAuthor(response.data);
         console.log(response.data);
-        if (userId == response.data.id) {
+        console.log(user);
+        if (user && userId == user.id) {
           setIsCurrentUser(true);
         }
       } catch (error) {
@@ -35,7 +36,7 @@ function AuthorProfile() {
     };
 
     fetchAuthor();
-  }, [userId]); // Re-run the effect when userId changes
+  }, [userId, user]); // Re-run the effect when userId changes
 
   return (
     <>

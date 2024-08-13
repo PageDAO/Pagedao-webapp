@@ -2,6 +2,7 @@
 import { useSocialAccounts, useIsLoggedIn, useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import { SocialIcon } from "@dynamic-labs/iconic";
 import { StarIcon } from "@radix-ui/react-icons";
+import { Link } from "react-router-dom";
 
 const Avatar = ({ avatarUrl }) => {
   return (
@@ -89,7 +90,7 @@ function AuthorInfo({ author, isCurrentUser }) {
   const { user } = useDynamicContext();
   return (
     <div>
-      <button className="mb-5 text-medium">Back</button>
+      <Link className="mb-5 text-medium" to="/marketplace">Back</Link>
       <div className="flex justify-between">
         <div className="flex flex-col mr-4">
           <div className="mb-4">

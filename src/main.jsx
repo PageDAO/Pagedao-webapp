@@ -216,8 +216,17 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         evmNetworks,
         appLogoUrl: walletLogo,
         events: {
+          onEmbeddedWalletCreated: (jwtVerifiedCredential) => {
+            console.log('onEmbeddedWalletCreated', jwtVerifiedCredential);
+          },
+          onSignedMessage: ({ signatureHash, signedMessage }) => {
+            console.log(
+              `onSignedMessage was called: ${signatureHash}, ${signedMessage}`
+            );
+          },
           onAuthSuccess: async (args) => {
             console.log("onAuthSuccess was called", args);
+            // set the current wallet to polygon
             // set up the user's secretjs metamask wallet if it doesn't exist on the userAdditionalAddresses
             const additionalAddresses =
               await args.primaryWallet.connector.getAdditionalAddresses(

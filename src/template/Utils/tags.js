@@ -1,3 +1,4 @@
+
 const emotionDescriptorTags = [
   "Joyful",
   "Melancholic",
@@ -63,12 +64,39 @@ const writingStylesTags = [
   "Monologic",
   "Hypertext",
 ];
+
+const createMap = (arr) => {
+  return arr.map((itemtype) => {
+    return { value: itemtype, label: itemtype };
+  }).sort((a,b)=>a.value.localeCompare(b.value));
+};
+
+const descriptorTags = [
+  {
+    label: 'Emotion',
+    options: createMap(emotionDescriptorTags),
+  },
+  {
+    label: 'Sentiment',
+    options: createMap(sentimentDescriptorTags),
+  },
+  {
+    label: 'Mood',
+    options: createMap(moodDescriptorTags),
+  },
+  {
+    label: 'Writing Style',
+    options: createMap(writingStylesTags),
+  },
+];
+/*
 const descriptorTags = [
 ...emotionDescriptorTags,
 ...sentimentDescriptorTags,
 ...moodDescriptorTags,
 ...writingStylesTags
 ];
+*/
 /*
 const descriptorTags = [ 
   {'label': 'Emotions', 'options': emotionDescriptorTags.map((val)=>{return {'value':val,'label':val};})}, 
@@ -3985,6 +4013,7 @@ const itemTypeTags = [
   "Memoir",
   "Biography",
   "Autobiography",
+  "Legal Document",
   "Play",
   "Script",
   "Newsletter",

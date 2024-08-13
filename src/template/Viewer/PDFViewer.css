@@ -1,0 +1,119 @@
+html, body {
+  padding:0;
+  margin:0;
+}
+
+#app main {
+  background-color:#cbcbcb;
+  padding:110px 0 40px 0;
+}
+
+header {
+  position:fixed;
+  width:100%;
+  padding:20px;
+  box-shadow:0 1px 10px rgba(0, 0, 0, 0.3);
+  background-color:#fff;
+  z-index:3;
+}
+
+header button {
+  background:none;
+  border:none;
+  outline:none;
+  font-size:24px;
+  cursor:pointer;
+  padding:3px;
+  border-radius:50%;
+  width:40px;
+  height:40px;
+  display:inline-block;
+  margin-right:10px;
+}
+
+header button span {
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+
+header button:hover {
+  background:rgba(0, 0, 0, 0.08);
+}
+
+header button.active {
+  background-color:orange;
+  color:#fff;
+}
+
+header label {
+  vertical-align:super;
+  font-size:18px;
+  padding:4px 10px;
+  margin:0 8px;
+  background-color:rgba(0, 0, 0, 0.08);
+  border-radius:3px;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.pdf-viewer-container {
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  flex-direction:column;
+}
+
+.page-container {
+  position:relative;
+  margin:10px 0;
+  min-height:50vh;
+}
+
+.page-container .r6o-content-wrapper {
+  position:absolute !important;
+  top:0;
+  left:0;
+  right:0;
+  bottom:0;
+}
+
+.page-container .textLayer {
+  opacity:1;
+  z-index:1;
+}
+
+.page-container .a9s-annotationlayer {
+  z-index:2;
+  pointer-events:none;
+}
+
+.page-container .r6o-annotation,
+.page-container .a9s-annotation {
+  pointer-events:auto;
+}
+
+.page-container.debug .textLayer span {
+  color:red;
+}
+
+.page-container .textLayer br {
+  display:none;
+}
+
+.page-container .textLayer span.r6o-annotation,
+.page-container .textLayer span.r6o-selection {
+  position:relative;
+  cursor:pointer;
+}
+
+.page-container canvas {
+  box-shadow:1px 1px 10px rgba(0, 0, 0, 0.1);
+}
+
+.r6o-connections-canvas {
+  z-index:3;
+}
+
+.r6o-connections-editor {
+  z-index:4;
+}
