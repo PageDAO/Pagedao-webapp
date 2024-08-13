@@ -18,6 +18,7 @@ function AuthorProfile() {
   useMemo(() => {
     const fetchAuthor = async () => {
       try {
+        console.log("trying to fetch author with userId:", userId);
         //todo: refactor this to make the api url a config variable
         axios.defaults.headers.get["Content-Type"] = "application/json";
         const response = await axios.get(
@@ -25,8 +26,7 @@ function AuthorProfile() {
             `/usermetadata?userid=${userId}`
         );
         setAuthor(response.data);
-        console.log(response.data);
-        console.log(user);
+        console.log("author profile:", response.data);
         if (user && userId == user.id) {
           setIsCurrentUser(true);
         }

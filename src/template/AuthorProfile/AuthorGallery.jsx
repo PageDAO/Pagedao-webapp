@@ -8,7 +8,7 @@ function AuthorGallery({ author, iscurrentuser }) {
   console.log(author);
   return (
     <div>
-      {author.metadata.tasks.map((task) => (
+      {author.metadata.tasks && author.metadata.tasks.map((task) => (
         <div
           key={task.id}
           className="block w-full p-6 bg-neutral-50 mb-20 border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700"
