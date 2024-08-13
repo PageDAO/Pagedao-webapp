@@ -1,5 +1,5 @@
 import { createContext, useReducer, useEffect } from "react";
-import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
+import { useDynamicContext, useUserUpdateRequest } from "@dynamic-labs/sdk-react-core";
 import axios from "axios";
 import { pinToIPFS } from "../Utils";
 
@@ -25,15 +25,17 @@ export async function saveMetadata(tasks, metadata) {
 export function TasksProvider({ children }) {
   const [tasks, dispatch] = useReducer(tasksReducer, initialTasks);
   const { user, isAuthenticated } = useDynamicContext();
+  const { updateUser } = useUserUpdateRequest();
   // useEffect hook to fetch data when the component mounts
   useEffect(() => {
     const fetchData = async () => {
       try {
         if (isAuthenticated) {
           // Make a GET request to the API
+          console.log("user", user);
           console.log("fetching", user.metadata);
           if (user.metadata.hash === undefined) {
-            dispatch({ type: "initialized", tasks: [] });
+            dispatch({ type: "initialized", tasks: [], userUpdateFunction: updateUser, metadata: user.metadata });
             return;
           }
           const response = await axios
@@ -86,6 +88,7 @@ function tasksReducer(tasks, action) {
   };
   switch (action.type) {
     case "initialized": {
+      //saveIfNecessary(action.userUpdateFunction, structuredClone(action.tasks), action.metadata);
       return action.tasks && action.tasks.length > 0 ? structuredClone(action.tasks) : [];
     }
     case "added": {

@@ -17,6 +17,7 @@ import { CosmosWalletConnectors } from "@dynamic-labs/cosmos";
 import { reservoirChains } from "@reservoir0x/reservoir-sdk";
 import {
   ReservoirKitProvider,
+  CartProvider,
   lightTheme,
 } from "@reservoir0x/reservoir-kit-ui";
 import { DynamicWagmiConnector } from "@dynamic-labs/wagmi-connector";
@@ -303,12 +304,14 @@ ReactDOM.createRoot(document.getElementById("root")).render(
               }}
               theme={lightTheme}
             >
+              <CartProvider>
               <TasksProvider options={{
                 'platformFee': platformFee,
                 'marketplaceFee': marketplaceFee
               }}>
                 <App />
               </TasksProvider>
+              </CartProvider>
             </ReservoirKitProvider>
             </ThirdwebProvider>
           </DynamicWagmiConnector>

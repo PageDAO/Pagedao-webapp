@@ -30,15 +30,7 @@ function App() {
   const router = createBrowserRouter([
     {
       path: "/",
-      element: isLoggedIn ? (
-        userHasScopes(["creator"]) ? (
-          <Dashboard />
-        ) : (
-          <AuthorList />
-        )
-      ) : (
-        <Login />
-      ),
+      element: isLoggedIn ? <Dashboard />  :  <Login />,
     },
     {
       path: "/profile/:userId",

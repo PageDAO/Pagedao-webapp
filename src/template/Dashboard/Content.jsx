@@ -114,7 +114,7 @@ function Content() {
                 </div>
               )}
 
-              {!user.policiesConsent && <Modal show={openTOSModal} onClose={() => setOpenTOSModal(false)}>
+              {user && user.metadata && !user.metadata.termsAgreement && <Modal show={openTOSModal} onClose={() => setOpenTOSModal(false)}>
                 <Modal.Header>Terms of Service</Modal.Header>
                 <Modal.Body>
                   <div className="space-y-6">
@@ -327,9 +327,10 @@ function Content() {
                   </div>
                 </Modal.Body>
                 <Modal.Footer>
-                  <Button onClick={() => {
+                  <Button onClick={async () => {
                     //todo: do a dynamic userupdate request and set the user's policiesConsent to true
-                    updateUser({ policiesConsent: true });
+                    console.log("updating user TermsAgreement to true");
+                    updateUser({ metadata: {...user.metadata, termsAgreement: user.userId + " true" }}).then((response) => console.log(response));
                     setOpenTOSModal(false)
                     }}>
                     I accept
