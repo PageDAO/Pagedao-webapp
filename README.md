@@ -2,7 +2,7 @@
 
 This web app uses Vite, React and Tailwind
 
-[Youtube Video Demo](https://youtu.be/S5dNPR-Z4kQ)
+[Youtube Video Demo](https://www.youtube.com/watch?v=yvhEMVGsDag)
 ## Getting Started
 
 Clone the repository and run the following commands:
