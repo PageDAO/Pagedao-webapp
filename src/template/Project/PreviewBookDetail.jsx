@@ -128,7 +128,7 @@ function PreviewBookDetail({ projectIndex, itemIndex }) {
     });
 
     const maxClaimableSupply = item.supply;
-    const pricePerToken = item.contracts[0].price;
+    const pricePerToken =  0; //item.contracts[0].price;
     const currency = USDCPolygonAddress;
     const metadataURI =
       "https://ipfs.nftbookbazaar.com/ipfs/" + item.itemMetadataURI + "?";
@@ -393,7 +393,7 @@ function PreviewBookDetail({ projectIndex, itemIndex }) {
                             of {item.pages}
                             <br />
                             <strong>Claim:</strong> $
-                            {item && item.contracts && item.contracts[0].price}{" "}
+                            {item && item.contracts && item.contracts[0].price}{" - note that all sales are $0 for now "}
                             USD (Public)
                           </div>
                         </div>
