@@ -206,7 +206,7 @@ function PreviewBookDetail({ projectIndex, itemIndex }) {
       return (
         stringToHash(user.userId) * 100000 +
         projects[projectIndex].id * 5000 +
-        projects[projectIndex].items[itemIndex].id
+        projects[projectIndex].items[itemIndex].id + new Date().toLocaleString()
       );
     }
 
