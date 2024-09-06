@@ -3,6 +3,7 @@ import { DynamicEmbeddedWidget } from "@dynamic-labs/sdk-react-core";
 import TopNav from "./Layout/TopNav.jsx";
 import Footer from "./Layout/Footer.jsx";
 import AuthorList from "./AuthorProfile/AuthorList.jsx";
+import ItemGallery from "./AuthorProfile/ItemGallery.jsx";
 
 function Login() {
   return (
@@ -53,7 +54,10 @@ function Login() {
                 </div>
         </div>
         <div className="container mx-auto justify-start items-center">
-          <AuthorList />
+          <ItemGallery />
+        </div>
+        <div className="container mx-auto justify-start items-center">
+          <AuthorList showHeader={false} />
         </div>
       </div>
     </>

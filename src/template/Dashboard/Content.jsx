@@ -5,6 +5,8 @@ import SideBar from "./SideBar.jsx";
 import React, { useMemo, useContext, useState } from "react";
 import ProjectModal from "../Project/ProjectModal.jsx";
 import CollapsableEmptySection from "./CollapsableEmptySection.jsx";
+import ItemGallery from "../AuthorProfile/ItemGallery.jsx";
+
 import {
   TasksContext,
   TasksDispatchContext,
@@ -90,6 +92,7 @@ function Content() {
         <div className="w-full bg-neutral-100">
           <div className="container mx-auto py-10 flex justify-between gap-4">
             <div className="basis-3/4 flex-col justify-start items-start gap-8 inline-flex w-full">
+              <ItemGallery/>
               {userHasScopes(["creator"]) ? (
                 <CollapsableSection
                   title="What I created"
