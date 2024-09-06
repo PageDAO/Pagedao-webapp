@@ -18,7 +18,7 @@ const ItemGallery = () => {
   }, []);
 
   return (
-    <div class="flex flex-row">
+    <div className="flex flex-row">
       {items &&
         items.map((item) => (
           <Link
@@ -26,13 +26,13 @@ const ItemGallery = () => {
             key={`${item.userid}-${item.projectid}-${item.id}`}
           >
             <Card
-              className="flex-basis-20 "
+              className="flex-basis-20 h-full mr-4"
               imgAlt="Meaningful alt text for an image that is not purely decorative"
               imgSrc={item.image}
             >
-              <h5 className="font-bold tracking-tight text-gray-900 dark:text-white">
+              <span className="text-sm tracking-tight text-gray-900 dark:text-white">
                 {item.name}
-              </h5>
+              </span>
             </Card>
           </Link>
         ))}
