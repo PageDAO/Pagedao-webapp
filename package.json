@@ -47,7 +47,7 @@
     "grapesjs": "^0.21.12",
     "grapesjs-preset-webpage": "^1.0.3",
     "localforage": "^1.10.0",
-    "lucide-react": "^0.343.0",
+    "lucide-react": "^0.378.0",
     "magic-sdk": "^25.0.0",
     "match-sorter": "^6.3.4",
     "miscreant": "^0.3.2",
