@@ -42,7 +42,7 @@
     "axios": "^1.6.8",
     "classnames": "^2.5.1",
     "dotenv": "^16.4.1",
-    "express": "^4.19.1",
+    "express": "^4.21.0",
     "flowbite-react": "^0.10.1",
     "grapesjs": "^0.21.12",
     "grapesjs-preset-webpage": "^1.0.3",
