@@ -72,7 +72,7 @@
     "secretjs": "^1.12.5",
     "sort-by": "^1.2.0",
     "styled-components": "^6.1.11",
-    "thirdweb": "^5.23.0",
+    "thirdweb": "^5.58.4",
     "viem": "^2.7.22",
     "wagmi": "^2.5.7"
   },
