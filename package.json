@@ -15,7 +15,7 @@
     "@axelar-network/axelarjs-sdk": "^0.14.1",
     "@cosmjs/encoding": "^0.32.2",
     "@dynamic-labs/algorand": "^2.0.6",
-    "@dynamic-labs/blocto-evm": "^2.0.6",
+    "@dynamic-labs/blocto-evm": "^3.0.0",
     "@dynamic-labs/cosmos": "^2.0.6",
     "@dynamic-labs/ethereum": "^2.0.6",
     "@dynamic-labs/ethers-v5": "^2.0.6",
