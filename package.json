@@ -22,7 +22,7 @@
     "@dynamic-labs/flow": "^2.0.6",
     "@dynamic-labs/magic": "^2.0.6",
     "@dynamic-labs/sdk-react-core": "^2.0.6",
-    "@dynamic-labs/solana": "^2.0.6",
+    "@dynamic-labs/solana": "^4.8.2",
     "@dynamic-labs/starknet": "^2.0.6",
     "@dynamic-labs/wagmi-connector": "^2.0.6",
     "@grapesjs/react": "^1.0.0",
