@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@0xsquid/checkout-widget": "^1.0.1-beta.0",
-    "@0xsquid/sdk": "^2.8.22",
+    "@0xsquid/sdk": "^2.9.1",
     "@axelar-network/axelarjs-sdk": "^0.14.1",
     "@cosmjs/encoding": "^0.32.2",
     "@dynamic-labs/algorand": "^2.0.6",
@@ -39,7 +39,7 @@
     "@reservoir0x/reservoir-kit-ui": "^2.5.3",
     "@tanstack/react-query": "^5.34.2",
     "@wagmi/core": "^2.6.4",
-    "axios": "^1.6.8",
+    "axios": "^1.8.3",
     "classnames": "^2.5.1",
     "dotenv": "^16.4.1",
     "express": "^4.19.1",
