@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@0xsquid/checkout-widget": "^1.0.1-beta.0",
-    "@0xsquid/sdk": "^2.8.22",
+    "@0xsquid/sdk": "^2.9.4",
     "@axelar-network/axelarjs-sdk": "^0.14.1",
     "@cosmjs/encoding": "^0.32.2",
     "@dynamic-labs/algorand": "^2.0.6",
@@ -48,7 +48,7 @@
     "grapesjs-preset-webpage": "^1.0.3",
     "localforage": "^1.10.0",
     "lucide-react": "^0.343.0",
-    "magic-sdk": "^25.0.0",
+    "magic-sdk": "^29.0.5",
     "match-sorter": "^6.3.4",
     "miscreant": "^0.3.2",
     "pdf-lib": "^1.17.1",
