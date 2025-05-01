@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@0xsquid/checkout-widget": "^1.0.1-beta.0",
-    "@0xsquid/sdk": "^2.8.22",
+    "@0xsquid/sdk": "^2.9.3",
     "@axelar-network/axelarjs-sdk": "^0.14.1",
     "@cosmjs/encoding": "^0.32.2",
     "@dynamic-labs/algorand": "^2.0.6",
@@ -22,7 +22,7 @@
     "@dynamic-labs/flow": "^2.0.6",
     "@dynamic-labs/magic": "^2.0.6",
     "@dynamic-labs/sdk-react-core": "^2.0.6",
-    "@dynamic-labs/solana": "^2.0.6",
+    "@dynamic-labs/solana": "^4.13.0",
     "@dynamic-labs/starknet": "^2.0.6",
     "@dynamic-labs/wagmi-connector": "^2.0.6",
     "@grapesjs/react": "^1.0.0",
