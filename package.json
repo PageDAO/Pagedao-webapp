@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@0xsquid/checkout-widget": "^1.0.1-beta.0",
-    "@0xsquid/sdk": "^2.8.22",
+    "@0xsquid/sdk": "^2.9.3",
     "@axelar-network/axelarjs-sdk": "^0.14.1",
     "@cosmjs/encoding": "^0.32.2",
     "@dynamic-labs/algorand": "^2.0.6",
@@ -34,7 +34,7 @@
     "@radix-ui/react-label": "^2.1.0",
     "@radix-ui/react-progress": "^1.1.0",
     "@radix-ui/react-radio-group": "^1.2.0",
-    "@radix-ui/react-toast": "^1.1.5",
+    "@radix-ui/react-toast": "^1.2.0",
     "@recogito/recogito-react-pdf": "^0.8.8",
     "@reservoir0x/reservoir-kit-ui": "^2.5.3",
     "@tanstack/react-query": "^5.34.2",
@@ -43,7 +43,7 @@
     "classnames": "^2.5.1",
     "dotenv": "^16.4.1",
     "express": "^4.19.1",
-    "flowbite-react": "^0.10.1",
+    "flowbite-react": "^0.10.2",
     "grapesjs": "^0.21.12",
     "grapesjs-preset-webpage": "^1.0.3",
     "localforage": "^1.10.0",
@@ -72,9 +72,9 @@
     "secretjs": "^1.12.5",
     "sort-by": "^1.2.0",
     "styled-components": "^6.1.11",
-    "thirdweb": "^5.23.0",
+    "thirdweb": "^5.30.0",
     "viem": "^2.7.22",
-    "wagmi": "^2.5.7"
+    "wagmi": "^2.13.2"
   },
   "devDependencies": {
     "@babel/core": "^7.23.9",
