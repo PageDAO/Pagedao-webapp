@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@0xsquid/checkout-widget": "^1.0.1-beta.0",
-    "@0xsquid/sdk": "^2.8.22",
+    "@0xsquid/sdk": "^2.9.3",
     "@axelar-network/axelarjs-sdk": "^0.14.1",
     "@cosmjs/encoding": "^0.32.2",
     "@dynamic-labs/algorand": "^2.0.6",
